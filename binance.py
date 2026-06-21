@@ -20,6 +20,7 @@ import os
 import time
 import random
 import logging
+from logging.handlers import RotatingFileHandler
 import requests
 import threading
 import sys
@@ -38,8 +39,8 @@ GEMINI_API_KEY        = os.getenv("GEMINI_API_KEY")
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
 BINANCE_POST_ENDPOINT = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
 
-POSTS_PER_DAY_MIN = 40
-POSTS_PER_DAY_MAX = 50
+POSTS_PER_DAY_MIN = 80
+POSTS_PER_DAY_MAX = 90
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
@@ -91,14 +92,27 @@ class MemoryLogHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+# Configure log rotation (max 5MB per file, keeping 3 backups)
+rotating_handler = RotatingFileHandler(
+    "autoposter.log", 
+    maxBytes=5 * 1024 * 1024, 
+    backupCount=3,
+    encoding="utf-8"
+)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("autoposter.log"),
+        rotating_handler,
         logging.StreamHandler()
     ]
 )
+
+# Silence the extremely noisy Flask (werkzeug) and HTTP client (httpx) polling logs
+logging.getLogger('werkzeug').setLevel(logging.WARNING)
+logging.getLogger('httpx').setLevel(logging.WARNING)
+
 log = logging.getLogger(__name__)
 
 # Add MemoryLogHandler to display console logs in real time on the web UI
@@ -303,13 +317,13 @@ def generate_post(client: genai.Client, post_type: dict, coin: str,
     prompt = build_user_prompt(post_type, coin, recent_coins, recent_types)
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             temperature=1.1,        # Higher = more creative/varied
             top_p=0.95,
-            max_output_tokens=300,
+            max_output_tokens=5000,
         )
     )
     return response.text.strip()
