@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: binance-autoposter
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn binance:app --workers 1 --threads 4 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BINANCE_SQUARE_KEY
+        sync: false

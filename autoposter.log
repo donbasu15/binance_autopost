@@ -1,0 +1,41 @@
+2026-06-21 20:04:15,365 [INFO] Background posting thread started successfully.
+2026-06-21 20:04:15,365 [INFO] Starting local web server on port 10000...
+2026-06-21 20:04:15,368 [INFO] [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:10000
+ * Running on http://192.168.1.7:10000
+2026-06-21 20:04:15,368 [INFO] [33mPress CTRL+C to quit[0m
+2026-06-21 20:04:15,420 [INFO] 📅 Daily session: 49 posts scheduled across today's active window
+2026-06-21 20:04:15,420 [INFO]    First post: 14:51 UTC
+2026-06-21 20:04:15,420 [INFO]    Last post:  22:46 UTC
+2026-06-21 20:04:15,421 [INFO] ⏳ Next post in 17m 9s (post 1/49)
+2026-06-21 20:04:43,547 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:43] "GET / HTTP/1.1" 200 -
+2026-06-21 20:04:46,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:46] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:04:46,746 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:46] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2026-06-21 20:04:50,312 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:50] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:04:54,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:54] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:04:58,312 [INFO] 127.0.0.1 - - [21/Jun/2026 20:04:58] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:02,315 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:02] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:06,316 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:06] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:10,318 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:10] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:14,312 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:14] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:18,318 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:18] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:22,314 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:22] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:26,313 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:26] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:30,314 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:30] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:34,313 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:34] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:38,311 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:38] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:42,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:42] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:46,309 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:46] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:50,311 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:50] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:54,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:54] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:05:58,311 [INFO] 127.0.0.1 - - [21/Jun/2026 20:05:58] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:02,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:02] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:06,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:06] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:10,309 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:10] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:14,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:14] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:18,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:18] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:22,311 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:22] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:26,311 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:26] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:30,310 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:30] "GET /api/status HTTP/1.1" 200 -
+2026-06-21 20:06:34,309 [INFO] 127.0.0.1 - - [21/Jun/2026 20:06:34] "GET /api/status HTTP/1.1" 200 -
