@@ -594,6 +594,19 @@ def run_daily_session():
 # ─────────────────────────────────────────────
 app = Flask(__name__)
 
+# Start background thread on the first request to avoid Gunicorn master/worker fork issues
+first_request_done = False
+first_request_lock = threading.Lock()
+
+@app.before_request
+def initialize_background_thread():
+    global first_request_done
+    if not first_request_done:
+        with first_request_lock:
+            if not first_request_done:
+                start_background_thread()
+                first_request_done = True
+
 # Premium Web Dashboard (Glassmorphism dark theme)
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -1499,9 +1512,7 @@ def start_background_thread():
             log.info("Background posting thread started successfully.")
 
 
-if __name__ != "__main__":
-    # Imported by gunicorn on Render
-    start_background_thread()
+# Note: Background thread is started dynamically via app.before_request when run under Gunicorn
 
 
 # ─────────────────────────────────────────────
