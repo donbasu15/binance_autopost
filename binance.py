@@ -36,6 +36,16 @@ from flask import Flask, jsonify, render_template_string
 load_dotenv()
 
 GEMINI_API_KEY        = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEYS_STR   = os.getenv("GEMINI_API_KEYS", "")
+
+# Parse multiple keys; fall back to GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3 etc.
+GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS_STR.split(",") if k.strip()]
+if not GEMINI_API_KEYS:
+    for suffix in ["", "_2", "_3"]:
+        key = os.getenv(f"GEMINI_API_KEY{suffix}")
+        if key:
+            GEMINI_API_KEYS.append(key.strip())
+
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
 BINANCE_POST_ENDPOINT = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
 
@@ -121,6 +131,27 @@ log = logging.getLogger(__name__)
 memory_handler = MemoryLogHandler(last_log_messages)
 memory_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 log.addHandler(memory_handler)
+
+class GeminiClientRotator:
+    """Manages rotation and failover between multiple Gemini API keys."""
+    def __init__(self, api_keys: list[str]):
+        self.api_keys = api_keys
+        self.current_index = 0
+        self.clients = [genai.Client(api_key=key) for key in api_keys]
+
+    def get_client(self) -> genai.Client:
+        if not self.clients:
+            raise ValueError("No Gemini API keys configured.")
+        return self.clients[self.current_index]
+
+    def rotate(self):
+        if len(self.clients) > 1:
+            self.current_index = (self.current_index + 1) % len(self.clients)
+            masked = f"...{self.api_keys[self.current_index][-6:]}" if len(self.api_keys[self.current_index]) > 6 else "..."
+            log.info(f"🔄 Switched to Gemini API key index {self.current_index} (Key ending in {masked})")
+
+    def has_multiple_keys(self) -> bool:
+        return len(self.clients) > 1
 
 # ─────────────────────────────────────────────
 # POST TYPE TEMPLATES
@@ -284,7 +315,7 @@ COINS = [
 ]
 
 HASHTAG_POOL = [
-    "#crypto", "#BinanceSquare", "#Write2Earn",
+    "#crypto", "#BinanceSquare",
     "#Bitcoin", "#Ethereum", "#DeFi", "#Altcoins",
     "#CryptoTrading", "#BullRun", "#DYOR",
     "#cryptonews", "#Web3", "#blockchain",
@@ -544,7 +575,7 @@ def generate_post(client: genai.Client, post_type: dict, coin: dict,
             system_instruction=SYSTEM_PROMPT,
             temperature=1.1,        # Higher = more creative/varied
             top_p=0.95,
-            max_output_tokens=5000,
+            max_output_tokens=3000,
         )
     )
     return response.text.strip()
@@ -641,12 +672,12 @@ def build_daily_schedule(n_posts: int) -> list:
 
 def run_daily_session():
     global bot_state
-    if not GEMINI_API_KEY or not BINANCE_SQUARE_KEY:
+    if not GEMINI_API_KEYS or not BINANCE_SQUARE_KEY:
         raise ValueError(
-            "Missing API keys. Set GEMINI_API_KEY and BINANCE_SQUARE_KEY in your .env file."
+            "Missing API keys. Set GEMINI_API_KEYS (or GEMINI_API_KEY) and BINANCE_SQUARE_KEY in your .env file."
         )
 
-    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    rotator       = GeminiClientRotator(GEMINI_API_KEYS)
     fetcher       = LiveDataFetcher()
     
     # Initial data fetch
@@ -729,31 +760,47 @@ def run_daily_session():
 
         # Generate content with Gemini
         content = None
-        try:
-            log.info(f"🤖 Generating [{post_type['name']}] post about {coin['tag']}...")
-            content = generate_post(gemini_client, post_type, coin, live_data_block, recent_coins, recent_types)
+        failed_keys_count = 0
+        max_attempts = len(GEMINI_API_KEYS)
+        while failed_keys_count < max_attempts:
+            try:
+                current_client = rotator.get_client()
+                log.info(f"🤖 Generating [{post_type['name']}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts})...")
+                content = generate_post(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
 
-            # Basic sanity check — reject if too long or too short
-            word_count = len(content.split())
-            if word_count < 8:
-                log.warning(f"   Post too short ({word_count} words), skipping.")
-                with state_lock:
-                    bot_state["schedule"][idx]["status"] = "Skipped (Too Short)"
-                continue
-            if word_count > 180:
-                log.warning(f"   Post too long ({word_count} words), truncating.")
-                content = " ".join(content.split()[:160]) + "..."
-
-        except Exception as e:
-            log.error(f"   Gemini error: {e}")
-            with state_lock:
-                bot_state["schedule"][idx]["status"] = f"Gemini Error"
-                bot_state["posts_failed"] += 1
-            fail_streak += 1
-            if fail_streak >= 3:
-                log.error("   3 consecutive Gemini failures — pausing 5 minutes.")
-                time.sleep(300)
+                # Basic sanity check — reject if too long or too short
+                word_count = len(content.split())
+                if word_count < 8:
+                    log.warning(f"   Post too short ({word_count} words), skipping.")
+                    with state_lock:
+                        bot_state["schedule"][idx]["status"] = "Skipped (Too Short)"
+                    content = None
+                    break
+                if word_count > 180:
+                    log.warning(f"   Post too long ({word_count} words), truncating.")
+                    content = " ".join(content.split()[:160]) + "..."
+                
                 fail_streak = 0
+                break
+
+            except Exception as e:
+                log.error(f"   Gemini error on key index {rotator.current_index}: {e}")
+                failed_keys_count += 1
+                if failed_keys_count < max_attempts:
+                    rotator.rotate()
+                    time.sleep(1)
+                else:
+                    with state_lock:
+                        bot_state["schedule"][idx]["status"] = f"Gemini Error"
+                        bot_state["posts_failed"] += 1
+                    fail_streak += 1
+                    if fail_streak >= 3:
+                        log.error("   3 consecutive Gemini failures — pausing 5 minutes.")
+                        time.sleep(300)
+                        fail_streak = 0
+                    break
+
+        if not content:
             continue
 
         # Post to Binance Square
@@ -1653,11 +1700,11 @@ def api_status():
 
 @app.route("/api/post-now", methods=["POST"])
 def api_post_now():
-    if not GEMINI_API_KEY or not BINANCE_SQUARE_KEY:
+    if not GEMINI_API_KEYS or not BINANCE_SQUARE_KEY:
         return jsonify({"success": False, "error": "API keys not configured"}), 400
 
     try:
-        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        rotator       = GeminiClientRotator(GEMINI_API_KEYS)
         fetcher       = LiveDataFetcher()
         
         # Fresh live data fetch for the manual post
@@ -1689,7 +1736,24 @@ def api_post_now():
         # Build live data block for this specific coin
         live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
         
-        content = generate_post(gemini_client, post_type, coin, live_data_block, recent_coins, recent_types)
+        content = None
+        failed_keys_count = 0
+        max_attempts = len(GEMINI_API_KEYS)
+        while failed_keys_count < max_attempts:
+            try:
+                current_client = rotator.get_client()
+                content = generate_post(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
+                break
+            except Exception as e:
+                log.error(f"   Manual trigger Gemini error on key index {rotator.current_index}: {e}")
+                failed_keys_count += 1
+                if failed_keys_count < max_attempts:
+                    rotator.rotate()
+                else:
+                    raise e
+
+        if not content:
+            raise ValueError("Failed to generate content after all API key attempts.")
         
         log.info(f"📤 Manual trigger: Posting to Binance Square...")
         result = post_to_binance_square(content)
