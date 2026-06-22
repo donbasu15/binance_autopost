@@ -51,8 +51,8 @@ BINANCE_POST_ENDPOINT = "https://www.binance.com/bapi/composite/v1/public/pgc/op
 
 DATA_REFRESH_EVERY = 6
 
-POSTS_PER_DAY_MIN = 80
-POSTS_PER_DAY_MAX = 90
+POSTS_PER_DAY_MIN = 25
+POSTS_PER_DAY_MAX = 30
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
