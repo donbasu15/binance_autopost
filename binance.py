@@ -39,6 +39,8 @@ GEMINI_API_KEY        = os.getenv("GEMINI_API_KEY")
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
 BINANCE_POST_ENDPOINT = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
 
+DATA_REFRESH_EVERY = 6
+
 POSTS_PER_DAY_MIN = 80
 POSTS_PER_DAY_MAX = 90
 
@@ -129,121 +131,156 @@ POST_TYPES = [
 
     {
         "name": "price_target",
-        "description": "Bold price target prediction for a coin with a price ladder",
+        "description": (
+            "Bold price target with a price ladder. Ground it in the LIVE DATA above "
+            "— reference the actual current price and use realistic next targets. "
+            "Do not invent numbers not supported by the data."
+        ),
         "example": (
-            "$ETH is at or near a major bottom.\n"
-            "Based on technical analysis, a move toward $10,000 by April 2027 is possible.\n"
-            "1500 ➡️ 2500 ➡️ 4000 ➡️ 6000 ➡️ 10K\n"
+            "$ETH sitting at $3,200 right now.\n"
+            "Based on current momentum: 3200 ➡️ 4500 ➡️ 6000 ➡️ 8000\n"
+            "24h vol is $18B. Institutions are still buying.\n"
             "DYOR"
         )
     },
-
     {
         "name": "entry_signal",
-        "description": "A specific entry zone post with stop loss and targets",
+        "description": (
+            "Entry zone post with SL and TP targets. Use the LIVE DATA for the "
+            "current price to set a realistic entry zone just below it, "
+            "SL ~5-8% below entry, TPs at logical resistances above."
+        ),
         "example": (
-            "$BNB\n"
+            "$SOL\n"
             "Position: Long\n"
-            "Entry Zone: 580 - 610\n"
-            "SL: 540\n"
+            "Entry Zone: 148 - 155\n"
+            "SL: 138\n"
             "Targets:\n"
-            "TP1: 680\n"
-            "TP2: 750\n"
-            "TP3: 900\n"
-            "Trade $BNB"
+            "TP1: 170\n"
+            "TP2: 195\n"
+            "TP3: 220"
         )
     },
-
     {
         "name": "dip_entry",
-        "description": "Short punchy post about entering on a dip with emoji, casual tone",
+        "description": (
+            "Short punchy post about entering on a dip. Use the 24h low from "
+            "LIVE DATA to anchor the dip level. Casual tone, 1-2 emojis max."
+        ),
         "example": (
-            "$SOL probably touching 180$ after dipping to 120 🙃\n"
-            "Who's buying the dip? ✈️\n"
-            "I'm entering at 121 with strict S/L at 108"
+            "$BNB testing the 600 zone after that -4% candle 🙃\n"
+            "I'm loading here. 24h vol still at $2.3B — not dead.\n"
+            "S/L at 565, watching for a bounce."
         )
     },
-
     {
         "name": "bearish_warning",
-        "description": "Bearish short take on a coin, warns followers, no signal spam",
+        "description": (
+            "Bearish short take. Use the 7d change or current price structure "
+            "from LIVE DATA to justify the bearish view. No links, no signals."
+        ),
         "example": (
-            "$XRP bearish channel has formed.\n"
-            "Likely to dump toward 0.75.\n"
-            "Avoid so-called signal providers.\n"
-            "Mark this as expert opinion."
+            "$XRP down 8% this week and volume is drying up.\n"
+            "Bearish structure forming. 0.75 is the next level to watch.\n"
+            "Don't chase pumps. Patience."
         )
     },
-
-    {
-        "name": "fundamental_thesis",
-        "description": "Why a coin can go up based on fundamentals: supply, unlock, volume",
-        "example": (
-            "$ARB — here's why 3$ is possible:\n"
-            "• Supply: 1.27B circulating / 10B total\n"
-            "• Major token unlock: Q4 2026\n"
-            "• Daily volume: consistently $500M+\n"
-            "• L2 adoption growing\n"
-            "FOMO could hit before unlock. Thank me later 🫡\n"
-            "Sell when satisfied. Don't be greedy."
-        )
-    },
-
-    {
-        "name": "community_hold",
-        "description": "Community + sentiment post, encouraging holders, hopeful tone",
-        "example": (
-            "How many $LINK do you hold?\n"
-            "Hold tight 📈\n"
-            "$LINK has strong institutional backing + Chainlink's oracle dominance.\n"
-            "Staking live. Burns happening.\n"
-            "$30 is achievable 📊"
-        )
-    },
-
     {
         "name": "news_reaction",
-        "description": "React to a crypto news headline with a take, keep under 120 words",
+        "description": (
+            "React to ONE of the real news headlines from LIVE DATA above. "
+            "Pick the most interesting one. Write your genuine take on it. "
+            "Do NOT include any URLs. Reference the headline topic, not the source name."
+        ),
         "example": (
-            "🚨 Big news: Senate just advanced the CLARITY Act in a 15-9 vote.\n"
-            "Clear rules for BTC vs ETH classification incoming.\n"
-            "This could unlock massive institutional flows.\n"
-            "$BTC $ETH both reacting already.\n"
-            "What's your biggest hope from the CLARITY Act? Drop below 👇\n"
-            "#CLARITYAct #crypto #BTC"
+            "Senate just advanced the stablecoin bill. 15-9 vote.\n"
+            "$BTC barely moved but this changes everything long term.\n"
+            "Regulatory clarity = institutional green light.\n"
+            "Watch Q3."
         )
     },
-
     {
-        "name": "market_vibe",
-        "description": "Short 2-3 line vibe check on overall market, no specific coin targets",
+        "name": "fear_greed_take",
+        "description": (
+            "Short take based on the Fear & Greed index from LIVE DATA. "
+            "Explain what it means right now and what historically happens next. "
+            "Use the actual index value in the post."
+        ),
         "example": (
-            "Market is bleeding but the fundamentals haven't changed.\n"
-            "Zoom out. $BTC dominance is rising.\n"
-            "Alt season doesn't start until BTC settles. Patience."
+            "Fear & Greed index just hit 82 — Extreme Greed.\n"
+            "Last time we saw this: $BTC was at its cycle peak.\n"
+            "Not saying sell. Just saying be careful up here.\n"
+            "Greed kills portfolios."
         )
     },
-
+    {
+        "name": "trending_coin_take",
+        "description": (
+            "Short take on one of the currently trending coins from LIVE DATA. "
+            "Use the actual price data for that coin if available. "
+            "Keep it punchy — why is it trending and what does it mean?"
+        ),
+        "example": (
+            "$PEPE is trending again.\n"
+            "Up 22% in 7 days while everything else bleeds.\n"
+            "No fundamentals needed when the memes are this strong 🐸\n"
+            "Watch the volume — this one moves fast."
+        )
+    },
+    {
+        "name": "community_hold",
+        "description": (
+            "Encouraging hold post for long-term believers. "
+            "Reference the current price and volume from LIVE DATA to reinforce confidence."
+        ),
+        "example": (
+            "Still holding $LINK.\n"
+            "Volume up 40% this week. Oracle dominance untouched.\n"
+            "The quiet ones always run when the market wakes up.\n"
+            "Patience is the trade."
+        )
+    },
     {
         "name": "dark_humor_take",
-        "description": "Funny/sarcastic take on a coin or market situation, relatable",
+        "description": (
+            "Funny/sarcastic take on the market or a specific coin. "
+            "Use actual price or % change data from LIVE DATA to make it feel real."
+        ),
         "example": (
-            "The AVAX coin will drop below $1. Do you know why?\n"
-            "Because everyone bought it thinking it would hit $100\n"
-            "and is still waiting for that day 😭\n"
-            "$AVAX $BTC"
+            "$AVAX down 12% this week and everyone's still waiting for $100.\n"
+            "The hopium is real 😭\n"
+            "Meanwhile I'll be watching my $BTC quietly doing its thing."
         )
     },
 ]
 
 # ─────────────────────────────────────────────
-# COIN POOL — rotated across posts
+# COINS POOL — Maps cashtag → CoinGecko ID → Symbol
 # ─────────────────────────────────────────────
-COIN_POOL = [
-    "$BTC", "$ETH", "$BNB", "$SOL", "$XRP", "$AVAX",
-    "$LINK", "$ARB", "$OP", "$MATIC", "$DOGE", "$DOT",
-    "$ADA", "$SUI", "$APT", "$INJ", "$TIA", "$JUP",
-    "$WIF", "$PEPE", "$NEAR", "$FTM", "$ATOM",
+COINS = [
+    {"tag": "$BTC",   "cg_id": "bitcoin",        "symbol": "BTC"},
+    {"tag": "$ETH",   "cg_id": "ethereum",        "symbol": "ETH"},
+    {"tag": "$BNB",   "cg_id": "binancecoin",     "symbol": "BNB"},
+    {"tag": "$SOL",   "cg_id": "solana",          "symbol": "SOL"},
+    {"tag": "$XRP",   "cg_id": "ripple",          "symbol": "XRP"},
+    {"tag": "$AVAX",  "cg_id": "avalanche-2",     "symbol": "AVAX"},
+    {"tag": "$LINK",  "cg_id": "chainlink",       "symbol": "LINK"},
+    {"tag": "$ARB",   "cg_id": "arbitrum",        "symbol": "ARB"},
+    {"tag": "$OP",    "cg_id": "optimism",        "symbol": "OP"},
+    {"tag": "$MATIC", "cg_id": "matic-network",   "symbol": "MATIC"},
+    {"tag": "$DOGE",  "cg_id": "dogecoin",        "symbol": "DOGE"},
+    {"tag": "$DOT",   "cg_id": "polkadot",        "symbol": "DOT"},
+    {"tag": "$ADA",   "cg_id": "cardano",         "symbol": "ADA"},
+    {"tag": "$SUI",   "cg_id": "sui",             "symbol": "SUI"},
+    {"tag": "$APT",   "cg_id": "aptos",           "symbol": "APT"},
+    {"tag": "$INJ",   "cg_id": "injective-protocol", "symbol": "INJ"},
+    {"tag": "$TIA",   "cg_id": "celestia",        "symbol": "TIA"},
+    {"tag": "$JUP",   "cg_id": "jupiter-exchange-solana", "symbol": "JUP"},
+    {"tag": "$WIF",   "cg_id": "dogwifcoin",      "symbol": "WIF"},
+    {"tag": "$PEPE",  "cg_id": "pepe",            "symbol": "PEPE"},
+    {"tag": "$NEAR",  "cg_id": "near",            "symbol": "NEAR"},
+    {"tag": "$FTM",   "cg_id": "fantom",          "symbol": "FTM"},
+    {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
 ]
 
 HASHTAG_POOL = [
@@ -257,12 +294,192 @@ HASHTAG_POOL = [
 ]
 
 # ─────────────────────────────────────────────
+# LIVE DATA FETCHER
+# ─────────────────────────────────────────────
+
+class LiveDataFetcher:
+    """Fetches and caches live market data from free APIs."""
+
+    COINGECKO_BASE   = "https://api.coingecko.com/api/v3"
+    CRYPTONEWS_BASE  = "https://cryptocurrency.cv/api"
+
+    def __init__(self):
+        self._cache: dict = {}
+        self._cache_time: dict = {}
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
+
+    def _get(self, url: str, params: dict = None, timeout: int = 10) -> dict | None:
+        try:
+            r = self.session.get(url, params=params, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            log.warning(f"Fetch failed [{url}]: {e}")
+            return None
+
+    # ── CoinGecko: bulk market data for all tracked coins ──
+    def fetch_market_data(self) -> dict:
+        """Returns dict keyed by CoinGecko ID with price/change/volume/mcap."""
+        ids = ",".join(c["cg_id"] for c in COINS)
+        data = self._get(
+            f"{self.COINGECKO_BASE}/coins/markets",
+            params={
+                "vs_currency": "usd",
+                "ids": ids,
+                "order": "market_cap_desc",
+                "per_page": 50,
+                "page": 1,
+                "price_change_percentage": "24h,7d",
+            }
+        )
+        if not data:
+            return {}
+        result = {}
+        for coin in data:
+            result[coin["id"]] = {
+                "price":      coin.get("current_price"),
+                "change_24h": coin.get("price_change_percentage_24h"),
+                "change_7d":  coin.get("price_change_percentage_7d_in_currency"),
+                "volume":     coin.get("total_volume"),
+                "mcap":       coin.get("market_cap"),
+                "high_24h":   coin.get("high_24h"),
+                "low_24h":    coin.get("low_24h"),
+                "symbol":     coin.get("symbol", "").upper(),
+            }
+        log.info(f"  📊 Market data refreshed for {len(result)} coins")
+        return result
+
+    # ── CoinGecko: trending coins (no key needed) ──
+    def fetch_trending(self) -> list[str]:
+        data = self._get(f"{self.COINGECKO_BASE}/search/trending")
+        if not data:
+            return []
+        coins = data.get("coins", [])[:7]
+        return [c["item"]["symbol"].upper() for c in coins]
+
+    # ── cryptocurrency.cv: latest news headlines (no key needed) ──
+    def fetch_news_headlines(self, limit: int = 15) -> list[str]:
+        data = self._get(f"{self.CRYPTONEWS_BASE}/news", params={"limit": limit})
+        if not data or "articles" not in data:
+            return []
+        headlines = []
+        for a in data["articles"]:
+            title = a.get("title", "").strip()
+            if title:
+                headlines.append(title)
+        log.info(f"  📰 Fetched {len(headlines)} news headlines")
+        return headlines
+
+    # ── cryptocurrency.cv: Fear & Greed Index (no key needed) ──
+    def fetch_fear_greed(self) -> dict:
+        data = self._get(f"{self.CRYPTONEWS_BASE}/fear-greed")
+        if not data or "current" not in data:
+            return {"value": "N/A", "classification": "Unknown"}
+        curr = data["current"]
+        return {
+            "value":          curr.get("value", "N/A"),
+            "classification": curr.get("valueClassification", "Unknown"),
+        }
+
+    # ── Master refresh: called every N posts ──
+    def refresh_all(self) -> dict:
+        log.info("🔄 Refreshing live market data...")
+        time.sleep(1)  # polite delay for free APIs
+        return {
+            "market":   self.fetch_market_data(),
+            "trending": self.fetch_trending(),
+            "news":     self.fetch_news_headlines(),
+            "fg":       self.fetch_fear_greed(),
+            "fetched_at": datetime.utcnow().strftime("%H:%M UTC"),
+        }
+
+
+# ─────────────────────────────────────────────
+# DATA FORMATTER → turns raw data into a
+# compact text block injected into Gemini prompt
+# ─────────────────────────────────────────────
+
+def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
+                     global_data: dict) -> str:
+    """Returns a compact real-time data block for the selected coin."""
+    cg_id  = coin["cg_id"]
+    tag    = coin["tag"]
+
+    lines = [f"=== LIVE MARKET DATA (as of {global_data.get('fetched_at', 'now')}) ==="]
+
+    # Price data
+    m = global_data["market"].get(cg_id, {})
+    if m:
+        price    = m.get("price")
+        ch24     = m.get("change_24h")
+        ch7d     = m.get("change_7d")
+        vol      = m.get("volume")
+        mcap     = m.get("mcap")
+        h24      = m.get("high_24h")
+        l24      = m.get("low_24h")
+
+        def fmt_price(p):
+            if p is None: return "N/A"
+            if p >= 1:    return f"${p:,.2f}"
+            return f"${p:.6f}"
+
+        def fmt_large(n):
+            if n is None: return "N/A"
+            if n >= 1e9: return f"${n/1e9:.2f}B"
+            if n >= 1e6: return f"${n/1e6:.1f}M"
+            return f"${n:,.0f}"
+
+        def fmt_pct(p):
+            if p is None: return "N/A"
+            sign = "+" if p > 0 else ""
+            return f"{sign}{p:.2f}%"
+
+        lines.append(f"Coin: {tag}")
+        lines.append(f"Price: {fmt_price(price)}")
+        lines.append(f"24h Change: {fmt_pct(ch24)}")
+        lines.append(f"7d Change: {fmt_pct(ch7d)}")
+        lines.append(f"24h High: {fmt_price(h24)}  |  24h Low: {fmt_price(l24)}")
+        lines.append(f"Volume (24h): {fmt_large(vol)}")
+        lines.append(f"Market Cap: {fmt_large(mcap)}")
+    else:
+        lines.append(f"Coin: {tag}  |  Price data unavailable")
+
+    # Fear & Greed
+    fg = global_data.get("fg", {})
+    lines.append(f"\nMarket Sentiment: Fear & Greed = {fg.get('value', 'N/A')} "
+                 f"({fg.get('classification', 'Unknown')})")
+
+    # Trending
+    trending = global_data.get("trending", [])
+    if trending:
+        lines.append(f"Currently Trending: {', '.join(trending[:5])}")
+
+    # General news headlines
+    news = global_data.get("news", [])
+    if news:
+        lines.append("\nTop Crypto Headlines Right Now:")
+        for h in news[:6]:
+            lines.append(f"  • {h}")
+
+    lines.append("=" * 50)
+    return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────
 # GEMINI PROMPT BUILDER
 # ─────────────────────────────────────────────
 
 SYSTEM_PROMPT = """You are a crypto KOL (Key Opinion Leader) posting on Binance Square.
-Your posts must feel 100% human — written by a real trader, not AI.
+Your posts must feel 100% human — written by a real trader with real data, not AI.
 You follow real market sentiment and write with personality, confidence, and edge.
+
+You will be given LIVE market data (prices, % changes, news headlines, Fear & Greed index).
+USE THIS DATA to write the post. Do not use guessed or invented numbers.
+If data says ETH is at $3,412 — use $3,412, not some random price.
 
 STRICT RULES:
 1. Each post MUST feel different from previous ones in tone, structure, coin, and format.
@@ -274,30 +491,34 @@ STRICT RULES:
 7. NO social media handles (no @username, no Telegram, no Discord, no WhatsApp).
 8. NO guaranteed returns or "100% sure" language.
 9. NO financial advice disclaimers — short posts on Binance Square don't need them.
-10. Do NOT repeat the same coin in consecutive posts.
-11. Use emojis sparingly — 1–3 per post max, never mid-sentence.
-12. Vary your sentence length. Mix punchy 3-word lines with longer ones.
-13. Occasional typos or casual grammar are fine — makes it feel human.
-14. NEVER start a post with "I think" or "In my opinion".
-15. Output ONLY the post text. No preamble, no explanation, no quotes around it."""
+10. No data sources mentioned by name (don't say "CoinGecko says..." — just state the fact).
+11. Do NOT repeat the same coin or format as recent posts.
+12. Use emojis sparingly — 1–3 per post max, never mid-sentence.
+13. Vary your sentence length. Mix punchy 3-word lines with longer ones.
+14. Occasional typos or casual grammar are fine — makes it feel human.
+15. NEVER start a post with "I think" or "In my opinion".
+16. Output ONLY the post text. No preamble, no explanation, no quotes around it."""
 
 
-def build_user_prompt(post_type: dict, coin: str, recent_coins: list, recent_types: list) -> str:
+def build_user_prompt(post_type: dict, coin: dict, live_data_block: str,
+                      recent_coins: list, recent_types: list) -> str:
     recent_coins_str = ", ".join(recent_coins[-5:]) if recent_coins else "none"
     recent_types_str = ", ".join(recent_types[-3:]) if recent_types else "none"
 
-    # Pick 2-3 hashtags randomly
+    # Pick 2-4 hashtags randomly
     tags = random.sample(HASHTAG_POOL, random.randint(2, 4))
     tags_str = " ".join(tags)
 
-    return f"""Write a Binance Square short post in this format: [{post_type['name']}]
+    return f"""{live_data_block}
+
+Write a Binance Square short post in this format: [{post_type['name']}]
 
 FORMAT DESCRIPTION: {post_type['description']}
 
 EXAMPLE (use as style guide ONLY, do NOT copy):
 {post_type['example']}
 
-PRIMARY COIN: {coin}
+PRIMARY COIN: {coin['tag']}
 You may include 1-2 other related coins for context.
 
 AVOID these coins (used recently): {recent_coins_str}
@@ -312,9 +533,9 @@ Write the post now. Output ONLY the post text, nothing else."""
 # GEMINI CONTENT GENERATOR
 # ─────────────────────────────────────────────
 
-def generate_post(client: genai.Client, post_type: dict, coin: str,
-                  recent_coins: list, recent_types: list) -> str:
-    prompt = build_user_prompt(post_type, coin, recent_coins, recent_types)
+def generate_post(client: genai.Client, post_type: dict, coin: dict,
+                  live_data_block: str, recent_coins: list, recent_types: list) -> str:
+    prompt = build_user_prompt(post_type, coin, live_data_block, recent_coins, recent_types)
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -426,6 +647,14 @@ def run_daily_session():
         )
 
     gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+    fetcher       = LiveDataFetcher()
+    
+    # Initial data fetch
+    try:
+        live_data = fetcher.refresh_all()
+    except Exception as e:
+        log.warning(f"Initial live data fetch failed: {e}. Will retry during postings.")
+        live_data = {"market": {}, "trending": [], "news": [], "fg": {}, "fetched_at": "N/A"}
 
     n_posts = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
     schedule = build_daily_schedule(n_posts)
@@ -451,6 +680,13 @@ def run_daily_session():
     fail_streak  = 0
 
     for idx, scheduled_time in enumerate(schedule):
+        # Refresh live data every N posts
+        if idx > 0 and idx % DATA_REFRESH_EVERY == 0:
+            try:
+                live_data = fetcher.refresh_all()
+            except Exception as e:
+                log.warning(f"Live data refresh failed: {e}")
+
         # Wait until scheduled time
         now = datetime.utcnow()
         wait_sec = (scheduled_time - now).total_seconds()
@@ -474,18 +710,28 @@ def run_daily_session():
             available_types = [t for t in POST_TYPES if t["name"] not in recent_types[-2:]]
             post_type = random.choice(available_types if available_types else POST_TYPES)
 
-            available_coins = [c for c in COIN_POOL if c not in recent_coins[-4:]]
-            coin = random.choice(available_coins if available_coins else COIN_POOL)
+            # Pick coin — for trending/news types, try to use a trending coin
+            if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
+                trending_syms = live_data["trending"]
+                matching_coins = [c for c in COINS if c["symbol"] in trending_syms
+                                  and c["tag"] not in recent_coins[-4:]]
+                coin = random.choice(matching_coins if matching_coins else COINS)
+            else:
+                available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+                coin = random.choice(available_coins if available_coins else COINS)
             
-            bot_state["schedule"][idx]["coin"] = coin
+            bot_state["schedule"][idx]["coin"] = coin["tag"]
             bot_state["schedule"][idx]["type"] = post_type["name"]
             bot_state["schedule"][idx]["status"] = "Generating"
+
+        # Build live data block for this specific coin
+        live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
 
         # Generate content with Gemini
         content = None
         try:
-            log.info(f"🤖 Generating [{post_type['name']}] post about {coin}...")
-            content = generate_post(gemini_client, post_type, coin, recent_coins, recent_types)
+            log.info(f"🤖 Generating [{post_type['name']}] post about {coin['tag']}...")
+            content = generate_post(gemini_client, post_type, coin, live_data_block, recent_coins, recent_types)
 
             # Basic sanity check — reject if too long or too short
             word_count = len(content.split())
@@ -529,7 +775,7 @@ def run_daily_session():
 
                 # Track recency
                 with state_lock:
-                    recent_coins.append(coin)
+                    recent_coins.append(coin["tag"])
                     recent_types.append(post_type["name"])
                     if len(recent_coins) > 10:
                         recent_coins.pop(0)
@@ -1412,6 +1658,14 @@ def api_post_now():
 
     try:
         gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        fetcher       = LiveDataFetcher()
+        
+        # Fresh live data fetch for the manual post
+        try:
+            live_data = fetcher.refresh_all()
+        except Exception as e:
+            log.warning(f"Manual post live data fetch failed: {e}")
+            live_data = {"market": {}, "trending": [], "news": [], "fg": {}, "fetched_at": "N/A"}
         
         # Pick coin and type using shared recency history
         recent_coins = bot_state["recent_coins"]
@@ -1420,11 +1674,22 @@ def api_post_now():
         available_types = [t for t in POST_TYPES if t["name"] not in recent_types[-2:]]
         post_type = random.choice(available_types if available_types else POST_TYPES)
 
-        available_coins = [c for c in COIN_POOL if c not in recent_coins[-4:]]
-        coin = random.choice(available_coins if available_coins else COIN_POOL)
+        # Pick coin — for trending/news types, try to use a trending coin
+        if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
+            trending_syms = live_data["trending"]
+            matching_coins = [c for c in COINS if c["symbol"] in trending_syms
+                              and c["tag"] not in recent_coins[-4:]]
+            coin = random.choice(matching_coins if matching_coins else COINS)
+        else:
+            available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+            coin = random.choice(available_coins if available_coins else COINS)
 
-        log.info(f"🤖 Manual trigger: Generating [{post_type['name']}] post about {coin}...")
-        content = generate_post(gemini_client, post_type, coin, recent_coins, recent_types)
+        log.info(f"🤖 Manual trigger: Generating [{post_type['name']}] post about {coin['tag']}...")
+        
+        # Build live data block for this specific coin
+        live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
+        
+        content = generate_post(gemini_client, post_type, coin, live_data_block, recent_coins, recent_types)
         
         log.info(f"📤 Manual trigger: Posting to Binance Square...")
         result = post_to_binance_square(content)
@@ -1434,7 +1699,7 @@ def api_post_now():
             post_url = f"https://www.binance.com/square/post/{post_id}"
             
             with state_lock:
-                recent_coins.append(coin)
+                recent_coins.append(coin["tag"])
                 recent_types.append(post_type["name"])
                 if len(recent_coins) > 10:
                     recent_coins.pop(0)

@@ -11,3 +11,4 @@ services:
         sync: false
       - key: BINANCE_SQUARE_KEY
         sync: false
+
