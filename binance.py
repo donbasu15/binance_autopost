@@ -138,8 +138,6 @@ def load_bot_state():
         except Exception as e:
             log.error(f"Failed to load bot state: {e}")
 
-load_bot_state()
-
 class MemoryLogHandler(logging.Handler):
     def __init__(self, target_list, max_items=50):
         super().__init__()
@@ -183,6 +181,8 @@ log = logging.getLogger(__name__)
 memory_handler = MemoryLogHandler(last_log_messages)
 memory_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 log.addHandler(memory_handler)
+
+load_bot_state()
 
 class GeminiClientRotator:
     """Manages rotation and failover between multiple Gemini API keys."""
