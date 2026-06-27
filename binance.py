@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, request
 
 # ─────────────────────────────────────────────
 # CONFIG
@@ -47,12 +47,21 @@ if not GEMINI_API_KEYS:
             GEMINI_API_KEYS.append(key.strip())
 
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
-BINANCE_POST_ENDPOINT = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
+BINANCE_POST_URL      = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
+BINANCE_UPLOAD_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/presignedUrl"
+BINANCE_STATUS_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/imageStatus"
+BINANCE_KLINES_URL    = "https://api.binance.com/api/v3/klines"
+BINANCE_FUTURES_OI    = "https://fapi.binance.com/fapi/v1/openInterest"
+BINANCE_FUNDING_URL   = "https://fapi.binance.com/fapi/v1/fundingRate"
+COINGECKO_URL         = "https://api.coingecko.com/api/v3"
+FEAR_GREED_URL        = "https://api.alternative.me/fng/"
 
-DATA_REFRESH_EVERY = 6
+BINANCE_POST_ENDPOINT = BINANCE_POST_URL
 
-POSTS_PER_DAY_MIN = 25
-POSTS_PER_DAY_MAX = 30
+DATA_REFRESH_EVERY = 3
+
+POSTS_PER_DAY_MIN = 60
+POSTS_PER_DAY_MAX = 80
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
@@ -153,11 +162,6 @@ class GeminiClientRotator:
     def has_multiple_keys(self) -> bool:
         return len(self.clients) > 1
 
-# ─────────────────────────────────────────────
-# POST TYPE TEMPLATES
-# These define the 9 rotating post formats.
-# Gemini picks content — the format varies the structure.
-# ─────────────────────────────────────────────
 POST_TYPES = [
 
     {
@@ -331,9 +335,6 @@ HASHTAG_POOL = [
 class LiveDataFetcher:
     """Fetches and caches live market data from free APIs."""
 
-    COINGECKO_BASE   = "https://api.coingecko.com/api/v3"
-    CRYPTONEWS_BASE  = "https://cryptocurrency.cv/api"
-
     def __init__(self):
         self._cache: dict = {}
         self._cache_time: dict = {}
@@ -343,7 +344,7 @@ class LiveDataFetcher:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         })
 
-    def _get(self, url: str, params: dict = None, timeout: int = 10) -> dict | None:
+    def _get(self, url: str, params: dict = None, timeout: int = 10) -> dict | list | None:
         try:
             r = self.session.get(url, params=params, timeout=timeout)
             r.raise_for_status()
@@ -357,7 +358,7 @@ class LiveDataFetcher:
         """Returns dict keyed by CoinGecko ID with price/change/volume/mcap."""
         ids = ",".join(c["cg_id"] for c in COINS)
         data = self._get(
-            f"{self.COINGECKO_BASE}/coins/markets",
+            f"{COINGECKO_URL}/coins/markets",
             params={
                 "vs_currency": "usd",
                 "ids": ids,
@@ -386,7 +387,7 @@ class LiveDataFetcher:
 
     # ── CoinGecko: trending coins (no key needed) ──
     def fetch_trending(self) -> list[str]:
-        data = self._get(f"{self.COINGECKO_BASE}/search/trending")
+        data = self._get(f"{COINGECKO_URL}/search/trending")
         if not data:
             return []
         coins = data.get("coins", [])[:7]
@@ -394,7 +395,8 @@ class LiveDataFetcher:
 
     # ── cryptocurrency.cv: latest news headlines (no key needed) ──
     def fetch_news_headlines(self, limit: int = 15) -> list[str]:
-        data = self._get(f"{self.CRYPTONEWS_BASE}/news", params={"limit": limit})
+        # Using the existing cryptonews URL since it's the specific news source
+        data = self._get("https://cryptocurrency.cv/api/news", params={"limit": limit})
         if not data or "articles" not in data:
             return []
         headlines = []
@@ -405,16 +407,37 @@ class LiveDataFetcher:
         log.info(f"  📰 Fetched {len(headlines)} news headlines")
         return headlines
 
-    # ── cryptocurrency.cv: Fear & Greed Index (no key needed) ──
+    # ── alternative.me: Fear & Greed Index ──
     def fetch_fear_greed(self) -> dict:
-        data = self._get(f"{self.CRYPTONEWS_BASE}/fear-greed")
-        if not data or "current" not in data:
+        data = self._get(FEAR_GREED_URL)
+        if not data or "data" not in data or not data["data"]:
             return {"value": "N/A", "classification": "Unknown"}
-        curr = data["current"]
+        curr = data["data"][0]
         return {
             "value":          curr.get("value", "N/A"),
-            "classification": curr.get("valueClassification", "Unknown"),
+            "classification": curr.get("value_classification", "Unknown"),
         }
+
+    # ── Binance Spot: Klines ──
+    def fetch_klines(self, symbol: str, interval: str = "4h", limit: int = 100) -> list | None:
+        """Fetches spot klines for a given symbol."""
+        if not symbol.endswith("USDT"):
+            symbol = f"{symbol}USDT"
+        return self._get(BINANCE_KLINES_URL, params={"symbol": symbol, "interval": interval, "limit": limit})
+
+    # ── Binance Futures: Open Interest ──
+    def fetch_futures_oi(self, symbol: str) -> dict | None:
+        """Fetches current open interest for a futures symbol."""
+        if not symbol.endswith("USDT"):
+            symbol = f"{symbol}USDT"
+        return self._get(BINANCE_FUTURES_OI, params={"symbol": symbol})
+
+    # ── Binance Futures: Funding Rate ──
+    def fetch_futures_funding(self, symbol: str) -> list | None:
+        """Fetches historical/current funding rate for a futures symbol."""
+        if not symbol.endswith("USDT"):
+            symbol = f"{symbol}USDT"
+        return self._get(BINANCE_FUNDING_URL, params={"symbol": symbol, "limit": 1})
 
     # ── Master refresh: called every N posts ──
     def refresh_all(self) -> dict:
@@ -429,6 +452,122 @@ class LiveDataFetcher:
         }
 
 
+def calculate_indicators(klines_data: list) -> dict:
+    """Calculates RSI, MACD, Bollinger Bands, EMAs, Support, and Resistance from klines."""
+    if not klines_data or len(klines_data) < 20:
+        return {}
+    
+    try:
+        # Klines format: [open_time, open, high, low, close, volume, ...]
+        closes = [float(k[4]) for k in klines_data]
+        highs = [float(k[2]) for k in klines_data]
+        lows = [float(k[3]) for k in klines_data]
+        
+        import pandas as pd
+        df = pd.DataFrame({"close": closes, "high": highs, "low": lows})
+        
+        # EMAs
+        df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
+        df["ema50"] = df["close"].ewm(span=50, adjust=False).mean()
+        
+        # Bollinger Bands
+        df["bb_mid"] = df["close"].rolling(20).mean()
+        df["bb_std"] = df["close"].rolling(20).std()
+        df["bb_upper"] = df["bb_mid"] + 2 * df["bb_std"]
+        df["bb_lower"] = df["bb_mid"] - 2 * df["bb_std"]
+        
+        # RSI 14
+        delta = df["close"].diff()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(14).mean()
+        # Handle divide by zero
+        loss = loss.replace(0, 1e-9)
+        rs = gain / loss
+        df["rsi"] = 100 - (100 / (1 + rs))
+        
+        # MACD
+        exp1 = df["close"].ewm(span=12, adjust=False).mean()
+        exp2 = df["close"].ewm(span=26, adjust=False).mean()
+        df["macd"] = exp1 - exp2
+        df["macd_signal"] = df["macd"].ewm(span=9, adjust=False).mean()
+        df["macd_hist"] = df["macd"] - df["macd_signal"]
+        
+        # Support / Resistance (local min/max over last 50 candles)
+        support = float(df["low"].iloc[-50:].min())
+        resistance = float(df["high"].iloc[-50:].max())
+        
+        last = df.iloc[-1]
+        prev_macd_hist = df["macd_hist"].iloc[-2] if len(df) > 1 else 0
+        
+        # Determine classification text
+        rsi_val = last["rsi"]
+        if rsi_val is None or pd.isna(rsi_val):
+            rsi_desc = "N/A"
+        elif rsi_val >= 70:
+            rsi_desc = f"{rsi_val:.2f} (Overbought)"
+        elif rsi_val <= 30:
+            rsi_desc = f"{rsi_val:.2f} (Oversold)"
+        else:
+            rsi_desc = f"{rsi_val:.2f} (Neutral)"
+            
+        macd_val = last["macd"]
+        macd_sig = last["macd_signal"]
+        macd_hist = last["macd_hist"]
+        if pd.isna(macd_val) or pd.isna(macd_sig):
+            macd_desc = "N/A"
+        elif macd_hist > 0 and prev_macd_hist <= 0:
+            macd_desc = f"Line={macd_val:.2f}, Signal={macd_sig:.2f} (Bullish Crossover)"
+        elif macd_hist < 0 and prev_macd_hist >= 0:
+            macd_desc = f"Line={macd_val:.2f}, Signal={macd_sig:.2f} (Bearish Crossover)"
+        else:
+            macd_desc = f"Line={macd_val:.2f}, Signal={macd_sig:.2f}, Hist={macd_hist:.2f}"
+            
+        bb_upper = last["bb_upper"]
+        bb_lower = last["bb_lower"]
+        bb_mid = last["bb_mid"]
+        close_val = last["close"]
+        if pd.isna(bb_upper) or pd.isna(bb_lower):
+            bb_desc = "N/A"
+        elif close_val >= bb_upper:
+            bb_desc = f"Upper={bb_upper:.2f}, Lower={bb_lower:.2f} (Price above Upper Band - Overextended)"
+        elif close_val <= bb_lower:
+            bb_desc = f"Upper={bb_upper:.2f}, Lower={bb_lower:.2f} (Price below Lower Band - Oversold)"
+        else:
+            bb_desc = f"Upper={bb_upper:.2f}, Mid={bb_mid:.2f}, Lower={bb_lower:.2f} (Neutral zone)"
+            
+        ema20 = last["ema20"]
+        ema50 = last["ema50"]
+        if pd.isna(ema20) or pd.isna(ema50):
+            ema_desc = "N/A"
+        elif close_val > ema20 and ema20 > ema50:
+            ema_desc = f"Price is above EMA20 (${ema20:.2f}) and EMA50 (${ema50:.2f}) -> Bullish Trend"
+        elif close_val < ema20 and ema20 < ema50:
+            ema_desc = f"Price is below EMA20 (${ema20:.2f}) and EMA50 (${ema50:.2f}) -> Bearish Trend"
+        else:
+            ema_desc = f"Price = ${close_val:.2f}, EMA20 = ${ema20:.2f}, EMA50 = ${ema50:.2f} -> Consolidating"
+            
+        return {
+            "rsi": float(rsi_val) if not pd.isna(rsi_val) else None,
+            "rsi_desc": rsi_desc,
+            "macd": float(macd_val) if not pd.isna(macd_val) else None,
+            "macd_signal": float(macd_sig) if not pd.isna(macd_sig) else None,
+            "macd_hist": float(macd_hist) if not pd.isna(macd_hist) else None,
+            "macd_desc": macd_desc,
+            "bb_upper": float(bb_upper) if not pd.isna(bb_upper) else None,
+            "bb_lower": float(bb_lower) if not pd.isna(bb_lower) else None,
+            "bb_mid": float(bb_mid) if not pd.isna(bb_mid) else None,
+            "bb_desc": bb_desc,
+            "ema20": float(ema20) if not pd.isna(ema20) else None,
+            "ema50": float(ema50) if not pd.isna(ema50) else None,
+            "ema_desc": ema_desc,
+            "support": float(support),
+            "resistance": float(resistance)
+        }
+    except Exception as e:
+        log.warning(f"Error calculating indicators: {e}")
+        return {}
+
+
 # ─────────────────────────────────────────────
 # DATA FORMATTER → turns raw data into a
 # compact text block injected into Gemini prompt
@@ -439,11 +578,45 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
     """Returns a compact real-time data block for the selected coin."""
     cg_id  = coin["cg_id"]
     tag    = coin["tag"]
+    symbol = coin["symbol"]
+
+    # Fetch extra coin-specific data (klines and derivatives)
+    klines = fetcher.fetch_klines(symbol)
+    oi_data = fetcher.fetch_futures_oi(symbol)
+    funding_data = fetcher.fetch_futures_funding(symbol)
 
     lines = [f"=== LIVE MARKET DATA (as of {global_data.get('fetched_at', 'now')}) ==="]
 
     # Price data
     m = global_data["market"].get(cg_id, {})
+    
+    # Robust fallback to Binance Klines if CoinGecko is empty or rate-limited
+    if not m and klines:
+        try:
+            price = float(klines[-1][4])
+            ch24 = 0.0
+            if len(klines) >= 6: # 6 * 4h candles = 24h
+                prev_price = float(klines[-6][4])
+                if prev_price > 0:
+                    ch24 = ((price - prev_price) / prev_price) * 100
+            
+            h24 = max(float(k[2]) for k in klines[-6:]) if len(klines) >= 6 else price
+            l24 = min(float(k[3]) for k in klines[-6:]) if len(klines) >= 6 else price
+            vol = sum(float(k[5]) for k in klines[-6:]) * price if len(klines) >= 6 else 0.0
+            
+            m = {
+                "price": price,
+                "change_24h": ch24,
+                "change_7d": 0.0,
+                "volume": vol,
+                "mcap": 0.0,
+                "high_24h": h24,
+                "low_24h": l24,
+                "symbol": symbol
+            }
+        except Exception as e:
+            log.warning(f"Error in price fallback calculation for {symbol}: {e}")
+
     if m:
         price    = m.get("price")
         ch24     = m.get("change_24h")
@@ -459,7 +632,7 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
             return f"${p:.6f}"
 
         def fmt_large(n):
-            if n is None: return "N/A"
+            if n is None or n == 0.0: return "N/A"
             if n >= 1e9: return f"${n/1e9:.2f}B"
             if n >= 1e6: return f"${n/1e6:.1f}M"
             return f"${n:,.0f}"
@@ -475,9 +648,59 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
         lines.append(f"7d Change: {fmt_pct(ch7d)}")
         lines.append(f"24h High: {fmt_price(h24)}  |  24h Low: {fmt_price(l24)}")
         lines.append(f"Volume (24h): {fmt_large(vol)}")
-        lines.append(f"Market Cap: {fmt_large(mcap)}")
+        if mcap and mcap > 0:
+            lines.append(f"Market Cap: {fmt_large(mcap)}")
     else:
         lines.append(f"Coin: {tag}  |  Price data unavailable")
+
+    # Technical analysis indicators
+    if klines:
+        indicators = calculate_indicators(klines)
+        if indicators:
+            lines.append("\n--- TECHNICAL INDICATORS ---")
+            lines.append(f"RSI (14): {indicators['rsi_desc']}")
+            lines.append(f"MACD: {indicators['macd_desc']}")
+            lines.append(f"Bollinger Bands: {indicators['bb_desc']}")
+            lines.append(f"EMA Trend: {indicators['ema_desc']}")
+            lines.append(f"Support: ${indicators['support']:,.2f}  |  Resistance: ${indicators['resistance']:,.2f}")
+
+    # Futures / Derivatives data
+    futures_lines = []
+    if oi_data:
+        oi_val = oi_data.get("openInterest")
+        if oi_val:
+            try:
+                oi_num = float(oi_val)
+                current_price = m.get("price") if m else None
+                if not current_price and klines:
+                    current_price = float(klines[-1][4])
+                
+                if current_price:
+                    oi_usd = oi_num * current_price
+                    if oi_usd >= 1e9:
+                        oi_str = f"${oi_usd/1e9:.2f}B USD"
+                    elif oi_usd >= 1e6:
+                        oi_str = f"${oi_usd/1e6:.1f}M USD"
+                    else:
+                        oi_str = f"${oi_usd:,.0f} USD"
+                    futures_lines.append(f"Futures Open Interest: {oi_num:,.2f} contracts ({oi_str})")
+                else:
+                    futures_lines.append(f"Futures Open Interest: {oi_num:,.2f} contracts")
+            except Exception:
+                futures_lines.append(f"Futures Open Interest: {oi_val} contracts")
+                
+    if funding_data and len(funding_data) > 0:
+        fr = funding_data[0].get("fundingRate")
+        if fr:
+            try:
+                fr_pct = float(fr) * 100
+                futures_lines.append(f"Futures Funding Rate: {fr_pct:.4f}%")
+            except Exception:
+                futures_lines.append(f"Futures Funding Rate: {fr}")
+
+    if futures_lines:
+        lines.append("\n--- DERIVATIVES / FUTURES DATA ---")
+        lines.extend(futures_lines)
 
     # Fear & Greed
     fg = global_data.get("fg", {})
@@ -489,11 +712,28 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
     if trending:
         lines.append(f"Currently Trending: {', '.join(trending[:5])}")
 
+    # Load news from newsdata.json
+    local_news = []
+    try:
+        import json
+        if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
+            with open("newsdata.json", "r", encoding="utf-8") as f:
+                news_list = json.load(f)
+            if news_list and isinstance(news_list, list):
+                for item in news_list:
+                    title = item.get("title")
+                    source = item.get("source", "unknown")
+                    sentiment = item.get("sentiment", "neutral")
+                    if title:
+                        local_news.append(f"{title} (Source: {source}, Sentiment: {sentiment})")
+    except Exception as e:
+        log.warning(f"Failed to read newsdata.json inside format_coin_data: {e}")
+
     # General news headlines
-    news = global_data.get("news", [])
+    news = local_news + global_data.get("news", [])
     if news:
         lines.append("\nTop Crypto Headlines Right Now:")
-        for h in news[:6]:
+        for h in news[:10]:
             lines.append(f"  • {h}")
 
     lines.append("=" * 50)
@@ -581,17 +821,346 @@ def generate_post(client: genai.Client, post_type: dict, coin: dict,
     return response.text.strip()
 
 
+def generate_post_with_gemma(client: genai.Client, post_type: dict, coin: dict,
+                             live_data_block: str, recent_coins: list, recent_types: list) -> str:
+    """Fallback generator using gemma-4-26b-a4b-it if Gemini keys are exhausted."""
+    prompt = build_user_prompt(post_type, coin, live_data_block, recent_coins, recent_types)
+    response = client.models.generate_content(
+        model="gemma-4-26b-a4b-it",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            temperature=1.1,
+            top_p=0.95,
+            max_output_tokens=3000,
+        )
+    )
+    return response.text.strip()
+
+
+def generate_advanced_chart(symbol: str, klines: list) -> bytes | None:
+    """Generates an advanced dark-themed technical analysis chart using Matplotlib and returns image bytes."""
+    if not klines or len(klines) < 20:
+        log.warning(f"Not enough klines data ({len(klines) if klines else 0}) to generate chart for {symbol}")
+        return None
+    
+    try:
+        import pandas as pd
+        import numpy as np
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        from io import BytesIO
+        
+        # Prepare dataframe
+        df = pd.DataFrame(klines, columns=[
+            "open_time", "open", "high", "low", "close", "volume",
+            "close_time", "quote_asset_volume", "number_of_trades",
+            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
+        ])
+        for col in ["open", "high", "low", "close", "volume"]:
+            df[col] = pd.to_numeric(df[col])
+        df["time"] = pd.to_datetime(df["open_time"], unit="ms")
+        
+        # Keep last 60 candles for neat plotting
+        df = df.iloc[-60:].reset_index(drop=True)
+        
+        # Calculate indicators
+        df["ema20"] = df["close"].ewm(span=20, adjust=False).mean()
+        df["ema50"] = df["close"].ewm(span=50, adjust=False).mean()
+        
+        df["bb_mid"] = df["close"].rolling(20).mean()
+        df["bb_std"] = df["close"].rolling(20).std()
+        df["bb_upper"] = df["bb_mid"] + 2 * df["bb_std"]
+        df["bb_lower"] = df["bb_mid"] - 2 * df["bb_std"]
+        
+        delta = df["close"].diff()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = -delta.where(delta < 0, 0).rolling(14).mean()
+        loss = loss.replace(0, 1e-9)
+        rs = gain / loss
+        df["rsi"] = 100 - (100 / (1 + rs))
+        
+        support = float(df["low"].min())
+        resistance = float(df["high"].max())
+        
+        # Set up styles
+        plt.style.use('dark_background')
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 7), gridspec_kw={'height_ratios': [2.5, 1]}, sharex=False)
+        fig.patch.set_facecolor('#181A20')
+        
+        # Axis 1: Candlesticks
+        ax1.set_facecolor('#181A20')
+        up = df[df['close'] >= df['open']]
+        down = df[df['close'] < df['open']]
+        green = '#0ECB81'
+        red = '#F6465D'
+        
+        ax1.bar(up.index, up['close'] - up['open'], bottom=up['open'], color=green, width=0.6)
+        ax1.bar(down.index, down['open'] - down['close'], bottom=down['close'], color=red, width=0.6)
+        ax1.vlines(up.index, up['low'], up['high'], color=green, linewidth=1)
+        ax1.vlines(down.index, down['low'], down['high'], color=red, linewidth=1)
+        
+        # EMA
+        ax1.plot(df.index, df['ema20'], color='#F0B90B', linewidth=1.2, label='EMA 20', linestyle='--')
+        ax1.plot(df.index, df['ema50'], color='#4B9CD3', linewidth=1.2, label='EMA 50', linestyle='-.')
+        
+        # Bollinger Bands
+        ax1.plot(df.index, df['bb_upper'], color='#8A9098', linewidth=0.8, alpha=0.4, linestyle=':')
+        ax1.plot(df.index, df['bb_lower'], color='#8A9098', linewidth=0.8, alpha=0.4, linestyle=':')
+        ax1.fill_between(df.index, df['bb_lower'], df['bb_upper'], color='#8A9098', alpha=0.03)
+        
+        # Support/Resistance lines
+        ax1.axhline(support, color=red, alpha=0.3, linestyle='--', linewidth=1)
+        ax1.text(0, support, f" Support: ${support:,.2f}", color=red, alpha=0.6, va='bottom', fontsize=8)
+        
+        ax1.axhline(resistance, color=green, alpha=0.3, linestyle='--', linewidth=1)
+        ax1.text(0, resistance, f" Resistance: ${resistance:,.2f}", color=green, alpha=0.6, va='bottom', fontsize=8)
+        
+        symbol_usdt = symbol if symbol.endswith("USDT") else f"{symbol}USDT"
+        ax1.set_title(f"{symbol_usdt} Technical Analysis (4h Chart)", color='#FCD535', fontsize=14, fontweight='bold', pad=15)
+        ax1.set_ylabel("Price (USD)", color='#EAECEF', fontsize=10)
+        ax1.tick_params(colors='#8A9098', labelsize=8)
+        ax1.grid(True, color='#8A9098', alpha=0.1, linestyle=':')
+        ax1.legend(loc='upper left', framealpha=0.1, labelcolor='#EAECEF', fontsize=9)
+        
+        for spine in ax1.spines.values():
+            spine.set_color('#2B3139')
+            
+        # Axis 2: RSI
+        ax2.set_facecolor('#181A20')
+        ax2.plot(df.index, df['rsi'], color='#E8A317', linewidth=1.5, label='RSI (14)')
+        ax2.axhline(70, color=red, alpha=0.3, linestyle=':', linewidth=1)
+        ax2.axhline(30, color=green, alpha=0.3, linestyle=':', linewidth=1)
+        ax2.fill_between(df.index, 30, 70, color='#E8A317', alpha=0.02)
+        
+        ax2.set_ylabel("RSI", color='#EAECEF', fontsize=10)
+        ax2.set_ylim(10, 90)
+        ax2.tick_params(colors='#8A9098', labelsize=8)
+        ax2.grid(True, color='#8A9098', alpha=0.1, linestyle=':')
+        for spine in ax2.spines.values():
+            spine.set_color('#2B3139')
+            
+        # X Axis Formatting
+        tick_indices = np.linspace(0, len(df)-1, 6, dtype=int)
+        tick_labels = [df['time'].iloc[i].strftime('%m-%d %H:%M') for i in tick_indices]
+        ax2.set_xticks(tick_indices)
+        ax2.set_xticklabels(tick_labels, rotation=15, color='#8A9098')
+        ax1.set_xticks([])
+        
+        fig.text(0.98, 0.02, "Powered by BiPass AutoPoster AI", color='#8A9098', 
+                 fontsize=8, alpha=0.5, ha='right', va='bottom')
+        
+        plt.tight_layout()
+        
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=120)
+        plt.close()
+        buf.seek(0)
+        return buf.getvalue()
+    except Exception as e:
+        log.warning(f"Failed to generate matplotlib chart for {symbol}: {e}")
+        return None
+
+
+def retrieve_search_image(rotator: GeminiClientRotator, symbol: str, topic: str) -> bytes | None:
+    """Uses LLM with Google Search grounding to retrieve a public direct image URL for the coin/topic, validates and downloads it."""
+    prompt = (
+        f"Search the web using Google Search grounding. Find a valid, high-quality, public direct image URL "
+        f"related to {symbol} (like a price chart, news visual, or logo) for the topic: '{topic}'. "
+        f"The URL must end with a common image extension like .png, .jpg, or .jpeg. "
+        f"Return ONLY the raw direct image URL on a single line, with absolutely no markdown formatting, quotes, or other text."
+    )
+    
+    img_url = None
+    failed_keys_count = 0
+    max_attempts = len(rotator.clients)
+    
+    # Try Gemini clients first
+    while failed_keys_count < max_attempts:
+        try:
+            client = rotator.get_client()
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[{"google_search": {}}],
+                    temperature=0.2
+                )
+            )
+            text = response.text.strip()
+            if text.startswith("http"):
+                img_url = text
+                log.info(f"   Image search URL found (Gemini): {img_url}")
+                break
+            else:
+                failed_keys_count += 1
+                rotator.rotate()
+        except Exception as e:
+            log.warning(f"   Gemini search failed on key index {rotator.current_index}: {e}")
+            failed_keys_count += 1
+            if failed_keys_count < max_attempts:
+                rotator.rotate()
+                time.sleep(1)
+            else:
+                break
+                
+    # If Gemini failed or is exhausted, try fallback model Gemma 4
+    if not img_url:
+        try:
+            log.info("   All Gemini keys exhausted. Falling back to Gemma 4 for image search...")
+            client = rotator.get_client()
+            response = client.models.generate_content(
+                model="gemma-4-26b-a4b-it",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[{"google_search": {}}],
+                    temperature=0.2
+                )
+            )
+            text = response.text.strip()
+            if text.startswith("http"):
+                img_url = text
+                log.info(f"   Image search URL found (Gemma 4): {img_url}")
+        except Exception as e:
+            log.warning(f"   Gemma 4 search failed: {e}")
+            
+    if not img_url:
+        return None
+        
+    if " " in img_url:
+        img_url = img_url.split()[0]
+    img_url = img_url.strip("`*\"'")
+    
+    # Validate and download
+    try:
+        r = requests.head(img_url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
+        content_type = r.headers.get("content-type", "")
+        if r.status_code == 200 and "image" in content_type:
+            r_get = requests.get(img_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+            if r_get.status_code == 200:
+                log.info(f"   Successfully downloaded search image ({len(r_get.content)} bytes)")
+                return r_get.content
+        else:
+            log.warning(f"   URL HEAD check failed for {img_url}: Status={r.status_code}, Type={content_type}")
+            
+        r_get = requests.get(img_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        content_type = r_get.headers.get("content-type", "")
+        if r_get.status_code == 200 and "image" in content_type:
+            log.info(f"   Successfully downloaded search image via GET ({len(r_get.content)} bytes)")
+            return r_get.content
+            
+    except Exception as e:
+        log.warning(f"   Failed to validate/download image from {img_url}: {e}")
+        
+    return None
+
+
+class ImageUploader:
+    """Handles uploading images to Binance Square via their presigned URL flow."""
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.session = requests.Session()
+        self.session.headers.update({
+            "X-Square-OpenAPI-Key": self.api_key,
+            "Content-Type": "application/json",
+            "clienttype": "web"
+        })
+
+    def upload(self, image_bytes: bytes) -> str | None:
+        if not self.api_key:
+            log.warning("Missing Binance Square Key, skipping image upload.")
+            return None
+            
+        log.info("📤 Requesting presigned URL from Binance Square image upload API...")
+        try:
+            r = self.session.post(
+                BINANCE_UPLOAD_URL,
+                json={"imageName": "chart.png"},
+                timeout=15
+            )
+            if r.status_code != 200:
+                log.warning(f"   Presigned URL request failed with status code {r.status_code}: {r.text}")
+                return None
+                
+            data = r.json()
+            if data.get("code") != "000000":
+                log.warning(f"   Presigned URL response error: {data.get('message')}")
+                return None
+                
+            res_data = data.get("data", {})
+            put_url = res_data.get("presignedUrl")
+            file_ticket = res_data.get("fileTicket")
+        except Exception as e:
+            log.warning(f"   Error fetching upload presigned URL: {e}")
+            return None
+
+        if not put_url or not file_ticket:
+            log.warning(f"   Missing presignedUrl or fileTicket in response data: {res_data}")
+            return None
+
+        log.info("   PUT uploading image bytes to presigned URL...")
+        try:
+            put_r = requests.put(
+                put_url,
+                data=image_bytes,
+                headers={"Content-Type": "image/png"},
+                timeout=30
+            )
+            if put_r.status_code not in (200, 204):
+                log.warning(f"   Image bytes PUT failed with status code {put_r.status_code}")
+                return None
+        except Exception as e:
+            log.warning(f"   Error PUT uploading image: {e}")
+            return None
+
+        log.info("   Polling image status to wait for public CDN URL...")
+        cdn_url = None
+        try:
+            for attempt in range(1, 12):
+                time.sleep(1.5)
+                r_st = self.session.post(
+                    BINANCE_STATUS_URL,
+                    json={"fileTicket": file_ticket},
+                    timeout=10
+                )
+                if r_st.status_code != 200:
+                    continue
+                data_st = r_st.json().get("data", {})
+                if data_st and data_st.get("imageUrl"):
+                    cdn_url = data_st.get("imageUrl")
+                    break
+                if data_st and data_st.get("status") == 2:
+                    log.warning(f"   Image processing failed on backend: {data_st.get('failedReason')}")
+                    return None
+        except Exception as e:
+            log.warning(f"   Error polling image status: {e}")
+            return None
+
+        if not cdn_url:
+            log.warning("   Timeout waiting for public image URL from Binance status endpoint")
+            return None
+
+        log.info(f"   🖼 Image successfully uploaded to Binance CDN: {cdn_url}")
+        return cdn_url
+
+
 # ─────────────────────────────────────────────
 # BINANCE SQUARE POSTER
 # ─────────────────────────────────────────────
 
-def post_to_binance_square(content: str) -> dict:
+def post_to_binance_square(content: str, image_urls: list = None) -> dict:
     headers = {
         "X-Square-OpenAPI-Key": BINANCE_SQUARE_KEY,
         "Content-Type": "application/json",
         "clienttype": "web",
     }
     payload = {"bodyTextOnly": content}
+    if image_urls:
+        payload["imageList"] = image_urls
+        payload["contentType"] = 1
+    else:
+        payload["contentType"] = 1
 
     response = requests.post(
         BINANCE_POST_ENDPOINT,
@@ -735,21 +1304,52 @@ def run_daily_session():
                 time.sleep(sleep_chunk)
                 remaining -= sleep_chunk
 
+        # Decide if this is a news post (50% probability) or other post
+        is_news_post = random.random() < 0.5
+        
         # Pick post type and coin — avoid recent repeats
         with state_lock:
             bot_state["status"] = f"Generating post {idx + 1}/{n_posts}"
-            available_types = [t for t in POST_TYPES if t["name"] not in recent_types[-2:]]
-            post_type = random.choice(available_types if available_types else POST_TYPES)
-
-            # Pick coin — for trending/news types, try to use a trending coin
-            if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
-                trending_syms = live_data["trending"]
-                matching_coins = [c for c in COINS if c["symbol"] in trending_syms
-                                  and c["tag"] not in recent_coins[-4:]]
-                coin = random.choice(matching_coins if matching_coins else COINS)
+            
+            if is_news_post:
+                # Use standard news_reaction type
+                post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[4])
+                
+                # Check newsdata.json to scan for any coin mentions to set as primary coin
+                coin = None
+                try:
+                    import json
+                    if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
+                        with open("newsdata.json", "r", encoding="utf-8") as f:
+                            news_list = json.load(f)
+                        if news_list and isinstance(news_list, list):
+                            all_titles = " ".join([item.get("title", "").upper() for item in news_list])
+                            mentioned_coins = []
+                            for c in COINS:
+                                if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
+                                    mentioned_coins.append(c)
+                            if mentioned_coins:
+                                coin = random.choice(mentioned_coins)
+                except Exception as e:
+                    log.warning(f"Error scanning news headlines for coin: {e}")
+                
+                if not coin:
+                    available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+                    coin = random.choice(available_coins if available_coins else COINS)
             else:
-                available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
-                coin = random.choice(available_coins if available_coins else COINS)
+                # Pick other standard post types (excluding news_reaction)
+                other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
+                post_type = random.choice(other_types if other_types else POST_TYPES)
+                
+                # Pick coin — for trending/news types, try to use a trending coin
+                if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
+                    trending_syms = live_data["trending"]
+                    matching_coins = [c for c in COINS if c["symbol"] in trending_syms
+                                      and c["tag"] not in recent_coins[-4:]]
+                    coin = random.choice(matching_coins if matching_coins else COINS)
+                else:
+                    available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+                    coin = random.choice(available_coins if available_coins else COINS)
             
             bot_state["schedule"][idx]["coin"] = coin["tag"]
             bot_state["schedule"][idx]["type"] = post_type["name"]
@@ -790,18 +1390,60 @@ def run_daily_session():
                     rotator.rotate()
                     time.sleep(1)
                 else:
-                    with state_lock:
-                        bot_state["schedule"][idx]["status"] = f"Gemini Error"
-                        bot_state["posts_failed"] += 1
-                    fail_streak += 1
-                    if fail_streak >= 3:
-                        log.error("   3 consecutive Gemini failures — pausing 5 minutes.")
-                        time.sleep(300)
+                    # Final attempt fallback using Gemma 4
+                    try:
+                        log.info(f"   ⚠️ All Gemini keys exhausted. Falling back to Gemma 4 for final content generation...")
+                        content = generate_post_with_gemma(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
                         fail_streak = 0
-                    break
+                        break
+                    except Exception as g_err:
+                        log.error(f"   Gemma 4 fallback final generation failed: {g_err}")
+                        with state_lock:
+                            bot_state["schedule"][idx]["status"] = f"Gemini Error"
+                            bot_state["posts_failed"] += 1
+                        fail_streak += 1
+                        if fail_streak >= 3:
+                            log.error("   3 consecutive Gemini failures — pausing 5 minutes.")
+                            time.sleep(300)
+                            fail_streak = 0
+                        break
 
         if not content:
             continue
+
+        # Add a space at the end of post to prevent hashtag rendering issues
+        content = content.strip() + " "
+
+        # Fetch klines for image generation
+        klines = fetcher.fetch_klines(coin["symbol"])
+
+        # Determine image to generate/retrieve and upload to Binance Square
+        image_urls = []
+        try:
+            image_bytes = None
+            uploader = ImageUploader(BINANCE_SQUARE_KEY)
+            
+            # Technical post types: generate Matplotlib chart
+            technical_types = {"price_target", "entry_signal", "dip_entry", "bearish_warning"}
+            if post_type["name"] in technical_types:
+                log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
+                image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            else:
+                # News / trending post types: try to search the web first
+                log.info(f"   🔍 News/trending post type detected. Searching web for {coin['symbol']} image...")
+                search_topic = f"{coin['tag']} price action and news"
+                image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
+                
+                if not image_bytes:
+                    log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
+                    image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            
+            if image_bytes:
+                cdn_url = uploader.upload(image_bytes)
+                if cdn_url:
+                    image_urls.append(cdn_url)
+        except Exception as img_err:
+            log.warning(f"   ⚠️ Image upload workflow failed: {img_err}. Posting as text-only.")
 
         # Post to Binance Square
         try:
@@ -810,7 +1452,7 @@ def run_daily_session():
                 bot_state["schedule"][idx]["status"] = "Posting"
                 
             log.info(f"📤 Posting to Binance Square...")
-            result = post_to_binance_square(content)
+            result = post_to_binance_square(content, image_urls)
 
             if result.get("code") == "000000":
                 post_id = result.get("data", {}).get("id", "unknown")
@@ -833,6 +1475,7 @@ def run_daily_session():
                     bot_state["posts_published"] += 1
                     bot_state["recent_posts"].insert(0, {
                         "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                        "type": post_type["name"],
                         "content": content,
                         "status": "Success",
                         "url": post_url
@@ -850,6 +1493,7 @@ def run_daily_session():
                     bot_state["posts_failed"] += 1
                     bot_state["recent_posts"].insert(0, {
                         "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                        "type": post_type["name"],
                         "content": content[:80] + "...",
                         "status": f"Rejected ({error_code})",
                         "url": "#"
@@ -1315,6 +1959,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             margin-bottom: 1rem;
         }
 
+        .post-type-badge {
+            background: rgba(240, 185, 11, 0.1);
+            color: var(--accent-gold);
+            border: 1px solid rgba(240, 185, 11, 0.25);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+            font-weight: 600;
+            display: inline-block;
+        }
+
         .post-header {
             display: flex;
             justify-content: space-between;
@@ -1566,9 +2224,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                             </a>`;
                         }
                         
+                        const postTypeBadge = post.type ? `<span class="post-type-badge">${post.type}</span>` : '';
                         el.innerHTML = `
-                            <div class="post-header">
-                                <span class="post-time">${post.time}</span>
+                            <div class="post-header" style="align-items: center;">
+                                <span class="post-time">${post.time}${postTypeBadge}</span>
                                 <span class="post-status ${statusClass}">${post.status}</span>
                             </div>
                             <div class="post-body">${escapeHTML(post.content)}</div>
@@ -1718,18 +2377,48 @@ def api_post_now():
         recent_coins = bot_state["recent_coins"]
         recent_types = bot_state["recent_types"]
         
-        available_types = [t for t in POST_TYPES if t["name"] not in recent_types[-2:]]
-        post_type = random.choice(available_types if available_types else POST_TYPES)
-
-        # Pick coin — for trending/news types, try to use a trending coin
-        if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
-            trending_syms = live_data["trending"]
-            matching_coins = [c for c in COINS if c["symbol"] in trending_syms
-                              and c["tag"] not in recent_coins[-4:]]
-            coin = random.choice(matching_coins if matching_coins else COINS)
+        # Decide if this is a news post (50% probability) or other post
+        is_news_post = random.random() < 0.5
+        
+        if is_news_post:
+            # Use standard news_reaction type
+            post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[4])
+            
+            # Check newsdata.json to scan for any coin mentions to set as primary coin
+            coin = None
+            try:
+                import json
+                if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
+                    with open("newsdata.json", "r", encoding="utf-8") as f:
+                        news_list = json.load(f)
+                    if news_list and isinstance(news_list, list):
+                        all_titles = " ".join([item.get("title", "").upper() for item in news_list])
+                        mentioned_coins = []
+                        for c in COINS:
+                            if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in title_upper:
+                                mentioned_coins.append(c)
+                        if mentioned_coins:
+                            coin = random.choice(mentioned_coins)
+            except Exception as e:
+                log.warning(f"Error scanning news headlines for coin: {e}")
+            
+            if not coin:
+                available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+                coin = random.choice(available_coins if available_coins else COINS)
         else:
-            available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
-            coin = random.choice(available_coins if available_coins else COINS)
+            # Pick other standard post types (excluding news_reaction)
+            other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
+            post_type = random.choice(other_types if other_types else POST_TYPES)
+            
+            # Pick coin — for trending/news types, try to use a trending coin
+            if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
+                trending_syms = live_data["trending"]
+                matching_coins = [c for c in COINS if c["symbol"] in trending_syms
+                                  and c["tag"] not in recent_coins[-4:]]
+                coin = random.choice(matching_coins if matching_coins else COINS)
+            else:
+                available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+                coin = random.choice(available_coins if available_coins else COINS)
 
         log.info(f"🤖 Manual trigger: Generating [{post_type['name']}] post about {coin['tag']}...")
         
@@ -1750,13 +2439,53 @@ def api_post_now():
                 if failed_keys_count < max_attempts:
                     rotator.rotate()
                 else:
-                    raise e
+                    # Fallback to Gemma 4
+                    try:
+                        log.info("   Manual trigger falling back to Gemma 4 for content generation...")
+                        content = generate_post_with_gemma(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
+                    except Exception as g_err:
+                        log.error(f"   Manual trigger Gemma 4 fallback failed: {g_err}")
+                        raise e
 
         if not content:
             raise ValueError("Failed to generate content after all API key attempts.")
-        
+
+        # Add a space at the end of post to prevent hashtag rendering issues
+        content = content.strip() + " "
+
+        # Fetch klines for image generation
+        klines = fetcher.fetch_klines(coin["symbol"])
+
+        # Determine image to generate/retrieve and upload to Binance Square
+        image_urls = []
+        try:
+            image_bytes = None
+            uploader = ImageUploader(BINANCE_SQUARE_KEY)
+            
+            # Technical post types: generate Matplotlib chart
+            technical_types = {"price_target", "entry_signal", "dip_entry", "bearish_warning"}
+            if post_type["name"] in technical_types:
+                log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
+                image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            else:
+                # News / trending post types: try to search the web first
+                log.info(f"   🔍 News/trending post type detected. Searching web for {coin['symbol']} image...")
+                search_topic = f"{coin['tag']} price action and news"
+                image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
+                
+                if not image_bytes:
+                    log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
+                    image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            
+            if image_bytes:
+                cdn_url = uploader.upload(image_bytes)
+                if cdn_url:
+                    image_urls.append(cdn_url)
+        except Exception as img_err:
+            log.warning(f"   ⚠️ Manual trigger image upload workflow failed: {img_err}. Posting as text-only.")
+
         log.info(f"📤 Manual trigger: Posting to Binance Square...")
-        result = post_to_binance_square(content)
+        result = post_to_binance_square(content, image_urls)
 
         if result.get("code") == "000000":
             post_id = result.get("data", {}).get("id", "unknown")
@@ -1773,6 +2502,7 @@ def api_post_now():
                 bot_state["posts_published"] += 1
                 bot_state["recent_posts"].insert(0, {
                     "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                    "type": post_type["name"],
                     "content": content,
                     "status": "Success",
                     "url": post_url
@@ -1791,6 +2521,7 @@ def api_post_now():
                 bot_state["posts_failed"] += 1
                 bot_state["recent_posts"].insert(0, {
                     "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                    "type": post_type["name"],
                     "content": content[:80] + "...",
                     "status": f"Rejected ({error_code})",
                     "url": "#"
@@ -1802,6 +2533,27 @@ def api_post_now():
             
     except Exception as e:
         log.error(f"Error in manual post trigger: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/news", methods=["POST"])
+def api_update_news():
+    data = request.get_json()
+    if not isinstance(data, list):
+        return jsonify({"success": False, "error": "Invalid format, expected list of news objects"}), 400
+    
+    for idx, item in enumerate(data):
+        if not isinstance(item, dict) or "title" not in item:
+            return jsonify({"success": False, "error": f"Item at index {idx} missing 'title' field"}), 400
+            
+    try:
+        import json
+        with open("newsdata.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        log.info(f"📰 Successfully updated newsdata.json with {len(data)} items via API.")
+        return jsonify({"success": True, "message": f"Successfully updated newsdata.json with {len(data)} items"})
+    except Exception as e:
+        log.error(f"Failed to write to newsdata.json: {e}")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
