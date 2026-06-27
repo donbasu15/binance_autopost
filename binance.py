@@ -82,9 +82,12 @@ INTERVAL_WEIGHTS = [15, 30, 30, 15, 10]
 state_lock = threading.Lock()
 last_log_messages = []
 
+def get_ist_now():
+    return datetime.utcnow() + timedelta(hours=5, minutes=30)
+
 bot_state = {
     "status": "Starting up",
-    "start_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+    "start_time": get_ist_now().strftime("%Y-%m-%d %I:%M:%S %p IST"),
     "posts_published": 0,
     "posts_failed": 0,
     "n_posts_scheduled": 0,
@@ -96,6 +99,46 @@ bot_state = {
     "is_running": False,
     "error_message": None
 }
+
+STATE_FILE = "bot_state.json"
+
+def save_bot_state():
+    with state_lock:
+        state_to_save = {
+            "start_time": bot_state["start_time"],
+            "posts_published": bot_state["posts_published"],
+            "posts_failed": bot_state["posts_failed"],
+            "n_posts_scheduled": bot_state["n_posts_scheduled"],
+            "schedule": bot_state["schedule"],
+            "recent_posts": bot_state["recent_posts"],
+            "recent_coins": bot_state["recent_coins"],
+            "recent_types": bot_state["recent_types"],
+            "error_message": bot_state["error_message"],
+            "status": bot_state["status"]
+        }
+    try:
+        import json
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state_to_save, f, indent=2)
+    except Exception as e:
+        log.error(f"Failed to save bot state: {e}")
+
+def load_bot_state():
+    global bot_state
+    if os.path.exists(STATE_FILE) and os.path.getsize(STATE_FILE) > 0:
+        try:
+            import json
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                saved_state = json.load(f)
+            with state_lock:
+                for k, v in saved_state.items():
+                    if k in bot_state:
+                        bot_state[k] = v
+            log.info("Successfully loaded bot state from persistent file.")
+        except Exception as e:
+            log.error(f"Failed to load bot state: {e}")
+
+load_bot_state()
 
 class MemoryLogHandler(logging.Handler):
     def __init__(self, target_list, max_items=50):
@@ -448,7 +491,7 @@ class LiveDataFetcher:
             "trending": self.fetch_trending(),
             "news":     self.fetch_news_headlines(),
             "fg":       self.fetch_fear_greed(),
-            "fetched_at": datetime.utcnow().strftime("%H:%M UTC"),
+            "fetched_at": get_ist_now().strftime("%I:%M %p IST"),
         }
 
 
@@ -1213,34 +1256,27 @@ def format_interval(seconds: int) -> str:
 # 06:00–23:00 UTC (avoids posting at 3am like a bot)
 # ─────────────────────────────────────────────
 
-def build_daily_schedule(n_posts: int) -> list:
-    """
-    Returns list of datetime objects for when to post today,
-    spread irregularly across the active window.
-    """
-    now = datetime.utcnow()
-    window_start = now.replace(hour=6, minute=0, second=0, microsecond=0)
-    window_end   = now.replace(hour=23, minute=0, second=0, microsecond=0)
+def reset_daily_cycle():
+    global bot_state
+    log.info("🔄 Resetting daily cycle posts, schedule, and stats...")
+    with state_lock:
+        bot_state["posts_published"] = 0
+        bot_state["posts_failed"] = 0
+        bot_state["n_posts_scheduled"] = 0
+        bot_state["schedule"] = []
+        bot_state["status"] = "Reset: Waiting for next cycle"
+        bot_state["error_message"] = None
+    save_bot_state()
 
-    if now > window_start:
-        window_start = now + timedelta(seconds=30)
-
-    total_seconds = int((window_end - window_start).total_seconds())
-    if total_seconds <= 0:
-        log.warning("Active window already passed. Will post immediately.")
-        return [now + timedelta(seconds=i * 60) for i in range(n_posts)]
-
-    # Pick n_posts random timestamps within window, then sort
-    timestamps = sorted([
-        window_start + timedelta(seconds=random.randint(0, total_seconds))
-        for _ in range(n_posts)
-    ])
-    return timestamps
-
-
-# ─────────────────────────────────────────────
-# MAIN RUNNER
-# ─────────────────────────────────────────────
+def responsive_sleep(seconds, status_prefix):
+    remaining = seconds
+    while remaining > 0:
+        now_ist = get_ist_now()
+        with state_lock:
+            bot_state["status"] = f"{status_prefix} | IST: {now_ist.strftime('%I:%M:%S %p')} (in {format_interval(int(remaining))})"
+        sleep_chunk = min(10, remaining)
+        time.sleep(sleep_chunk)
+        remaining -= sleep_chunk
 
 def run_daily_session():
     global bot_state
@@ -1249,8 +1285,19 @@ def run_daily_session():
             "Missing API keys. Set GEMINI_API_KEYS (or GEMINI_API_KEY) and BINANCE_SQUARE_KEY in your .env file."
         )
 
-    rotator       = GeminiClientRotator(GEMINI_API_KEYS)
-    fetcher       = LiveDataFetcher()
+    # 1. Check if we have an active schedule with at least one "Pending" item
+    has_active_schedule = False
+    with state_lock:
+        if bot_state["schedule"]:
+            has_active_schedule = any(item["status"] in ("Pending", "Generating", "Posting") for item in bot_state["schedule"])
+
+    if has_active_schedule:
+        log.info("📅 Resuming existing daily schedule from persistent state.")
+        execute_active_schedule()
+        return
+
+    # 2. Build a fresh schedule for the remaining active window
+    fetcher = LiveDataFetcher()
     
     # Initial data fetch
     try:
@@ -1259,66 +1306,114 @@ def run_daily_session():
         log.warning(f"Initial live data fetch failed: {e}. Will retry during postings.")
         live_data = {"market": {}, "trending": [], "news": [], "fg": {}, "fetched_at": "N/A"}
 
-    n_posts = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
-    schedule = build_daily_schedule(n_posts)
+    now_ist = get_ist_now()
+    cycle_end = get_cycle_end(now_ist)
+    remaining_seconds = (cycle_end - now_ist).total_seconds()
+    
+    if remaining_seconds <= 0:
+        log.warning("No remaining time in today's active window. Skipping scheduling.")
+        return
 
-    log.info(f"📅 Daily session: {n_posts} posts scheduled across today's active window")
-    log.info(f"   First post: {schedule[0].strftime('%H:%M UTC')}")
-    log.info(f"   Last post:  {schedule[-1].strftime('%H:%M UTC')}")
+    # Calculate proportion of posts to schedule
+    total_window_duration = (cycle_end - get_cycle_start(now_ist)).total_seconds() # 8 hours (28800 seconds)
+    proportion = max(0.1, min(1.0, remaining_seconds / total_window_duration))
+    
+    base_n = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
+    n_posts = max(1, int(base_n * proportion))
+    
+    # Generate schedule times within the remaining window
+    timestamps_ist = sorted([
+        now_ist + timedelta(seconds=random.randint(0, int(remaining_seconds)))
+        for _ in range(n_posts)
+    ])
+    
+    log.info(f"📅 Daily session: {n_posts} posts scheduled across remaining active window")
+    log.info(f"   First post: {timestamps_ist[0].strftime('%I:%M %p IST')}")
+    log.info(f"   Last post:  {timestamps_ist[-1].strftime('%I:%M %p IST')}")
 
     with state_lock:
         bot_state["n_posts_scheduled"] = n_posts
         bot_state["schedule"] = [
             {
-                "time": s.strftime("%H:%M UTC"),
+                "time": s.strftime("%I:%M %p IST"),
+                "time_iso": s.isoformat(),
                 "status": "Pending",
                 "coin": "Pending",
                 "type": "Pending"
-            } for s in schedule
+            } for s in timestamps_ist
         ]
+    save_bot_state()
+    
+    execute_active_schedule()
+
+def get_cycle_start(dt_ist):
+    return dt_ist.replace(hour=11, minute=30, second=0, microsecond=0)
+
+def get_cycle_end(dt_ist):
+    return dt_ist.replace(hour=19, minute=30, second=0, microsecond=0)
+
+def execute_active_schedule():
+    global bot_state
+    
+    rotator = GeminiClientRotator(GEMINI_API_KEYS)
+    fetcher = LiveDataFetcher()
+    
+    try:
+        live_data = fetcher.refresh_all()
+    except Exception as e:
+        log.warning(f"Initial live data fetch in execute_active_schedule failed: {e}")
+        live_data = {"market": {}, "trending": [], "news": [], "fg": {}, "fetched_at": "N/A"}
 
     recent_coins = bot_state["recent_coins"]
     recent_types = bot_state["recent_types"]
-    post_count   = 0
-    fail_streak  = 0
+    fail_streak = 0
+    
+    while True:
+        # Check if the cycle has ended in the meantime
+        now_ist = get_ist_now()
+        if now_ist >= get_cycle_end(now_ist):
+            log.info("⏰ Posting cycle end reached. Terminating daily schedule execution.")
+            break
+            
+        # Find next pending item
+        next_item_idx = -1
+        with state_lock:
+            for idx, item in enumerate(bot_state["schedule"]):
+                if item["status"] == "Pending":
+                    next_item_idx = idx
+                    break
+        
+        if next_item_idx == -1:
+            log.info("🏁 No pending items left in schedule. Daily schedule execution finished.")
+            break
+            
+        item = bot_state["schedule"][next_item_idx]
+        scheduled_time_ist = datetime.fromisoformat(item["time_iso"])
+        
+        # Wait until scheduled time
+        wait_sec = (scheduled_time_ist - now_ist).total_seconds()
+        if wait_sec > 0:
+            log.info(f"⏳ Next scheduled post (index {next_item_idx + 1}) in {format_interval(int(wait_sec))} at {item['time']}")
+            responsive_sleep(wait_sec, f"Waiting for post {next_item_idx + 1}/{len(bot_state['schedule'])} at {item['time']}")
+            
+        # Re-check time after sleep
+        now_ist = get_ist_now()
+        if now_ist >= get_cycle_end(now_ist):
+            log.info("⏰ Posting cycle end reached after sleep. Terminating daily schedule execution.")
+            break
 
-    for idx, scheduled_time in enumerate(schedule):
-        # Refresh live data every N posts
-        if idx > 0 and idx % DATA_REFRESH_EVERY == 0:
+        # Refresh live data periodically
+        if next_item_idx > 0 and next_item_idx % DATA_REFRESH_EVERY == 0:
             try:
                 live_data = fetcher.refresh_all()
             except Exception as e:
                 log.warning(f"Live data refresh failed: {e}")
 
-        # Wait until scheduled time
-        now = datetime.utcnow()
-        wait_sec = (scheduled_time - now).total_seconds()
-        
-        if wait_sec > 0:
-            log.info(f"⏳ Next post in {format_interval(int(wait_sec))} "
-                     f"(post {idx + 1}/{n_posts})")
-            
-            # Responsive wait loop
-            remaining = wait_sec
-            while remaining > 0:
-                with state_lock:
-                    bot_state["status"] = f"Waiting for post {idx + 1}/{n_posts} at {scheduled_time.strftime('%H:%M UTC')} (in {format_interval(int(remaining))})"
-                sleep_chunk = min(10, remaining)
-                time.sleep(sleep_chunk)
-                remaining -= sleep_chunk
-
-        # Decide if this is a news post (50% probability) or other post
+        # Pick post type and coin
         is_news_post = random.random() < 0.5
-        
-        # Pick post type and coin — avoid recent repeats
         with state_lock:
-            bot_state["status"] = f"Generating post {idx + 1}/{n_posts}"
-            
             if is_news_post:
-                # Use standard news_reaction type
                 post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[4])
-                
-                # Check newsdata.json to scan for any coin mentions to set as primary coin
                 coin = None
                 try:
                     import json
@@ -1326,7 +1421,7 @@ def run_daily_session():
                         with open("newsdata.json", "r", encoding="utf-8") as f:
                             news_list = json.load(f)
                         if news_list and isinstance(news_list, list):
-                            all_titles = " ".join([item.get("title", "").upper() for item in news_list])
+                            all_titles = " ".join([it.get("title", "").upper() for it in news_list])
                             mentioned_coins = []
                             for c in COINS:
                                 if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
@@ -1340,25 +1435,23 @@ def run_daily_session():
                     available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
                     coin = random.choice(available_coins if available_coins else COINS)
             else:
-                # Pick other standard post types (excluding news_reaction)
                 other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
                 post_type = random.choice(other_types if other_types else POST_TYPES)
                 
-                # Pick coin — for trending/news types, try to use a trending coin
                 if post_type["name"] == "trending_coin_take" and live_data.get("trending"):
                     trending_syms = live_data["trending"]
-                    matching_coins = [c for c in COINS if c["symbol"] in trending_syms
-                                      and c["tag"] not in recent_coins[-4:]]
+                    matching_coins = [c for c in COINS if c["symbol"] in trending_syms and c["tag"] not in recent_coins[-4:]]
                     coin = random.choice(matching_coins if matching_coins else COINS)
                 else:
                     available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
                     coin = random.choice(available_coins if available_coins else COINS)
-            
-            bot_state["schedule"][idx]["coin"] = coin["tag"]
-            bot_state["schedule"][idx]["type"] = post_type["name"]
-            bot_state["schedule"][idx]["status"] = "Generating"
 
-        # Build live data block for this specific coin
+            bot_state["schedule"][next_item_idx]["coin"] = coin["tag"]
+            bot_state["schedule"][next_item_idx]["type"] = post_type["name"]
+            bot_state["schedule"][next_item_idx]["status"] = "Generating"
+        save_bot_state()
+
+        # Build live data block
         live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
 
         # Generate content with Gemini
@@ -1371,12 +1464,12 @@ def run_daily_session():
                 log.info(f"🤖 Generating [{post_type['name']}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts})...")
                 content = generate_post(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
 
-                # Basic sanity check — reject if too long or too short
                 word_count = len(content.split())
                 if word_count < 8:
                     log.warning(f"   Post too short ({word_count} words), skipping.")
                     with state_lock:
-                        bot_state["schedule"][idx]["status"] = "Skipped (Too Short)"
+                        bot_state["schedule"][next_item_idx]["status"] = "Skipped (Too Short)"
+                    save_bot_state()
                     content = None
                     break
                 if word_count > 180:
@@ -1393,7 +1486,6 @@ def run_daily_session():
                     rotator.rotate()
                     time.sleep(1)
                 else:
-                    # Final attempt fallback using Gemma 4
                     try:
                         log.info(f"   ⚠️ All Gemini keys exhausted. Falling back to Gemma 4 for final content generation...")
                         content = generate_post_with_gemma(current_client, post_type, coin, live_data_block, recent_coins, recent_types)
@@ -1402,8 +1494,9 @@ def run_daily_session():
                     except Exception as g_err:
                         log.error(f"   Gemma 4 fallback final generation failed: {g_err}")
                         with state_lock:
-                            bot_state["schedule"][idx]["status"] = f"Gemini Error"
+                            bot_state["schedule"][next_item_idx]["status"] = f"Gemini Error"
                             bot_state["posts_failed"] += 1
+                        save_bot_state()
                         fail_streak += 1
                         if fail_streak >= 3:
                             log.error("   3 consecutive Gemini failures — pausing 5 minutes.")
@@ -1414,29 +1507,22 @@ def run_daily_session():
         if not content:
             continue
 
-        # Add a space at the end of post to prevent hashtag rendering issues
         content = content.strip() + " "
-
-        # Fetch klines for image generation
         klines = fetcher.fetch_klines(coin["symbol"])
 
-        # Determine image to generate/retrieve and upload to Binance Square
+        # Image generation/upload
         image_urls = []
         try:
             image_bytes = None
             uploader = ImageUploader(BINANCE_SQUARE_KEY)
-            
-            # Technical post types: generate Matplotlib chart
             technical_types = {"price_target", "entry_signal", "dip_entry", "bearish_warning"}
             if post_type["name"] in technical_types:
                 log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
                 image_bytes = generate_advanced_chart(coin["symbol"], klines)
             else:
-                # News / trending post types: try to search the web first
                 log.info(f"   🔍 News/trending post type detected. Searching web for {coin['symbol']} image...")
                 search_topic = f"{coin['tag']} price action and news"
                 image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
-                
                 if not image_bytes:
                     log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
                     image_bytes = generate_advanced_chart(coin["symbol"], klines)
@@ -1451,8 +1537,9 @@ def run_daily_session():
         # Post to Binance Square
         try:
             with state_lock:
-                bot_state["status"] = f"Posting post {idx + 1}/{n_posts} to Binance..."
-                bot_state["schedule"][idx]["status"] = "Posting"
+                bot_state["status"] = f"Posting post {next_item_idx + 1}/{len(bot_state['schedule'])} to Binance..."
+                bot_state["schedule"][next_item_idx]["status"] = "Posting"
+            save_bot_state()
                 
             log.info(f"📤 Posting to Binance Square...")
             result = post_to_binance_square(content, image_urls)
@@ -1460,12 +1547,10 @@ def run_daily_session():
             if result.get("code") == "000000":
                 post_id = result.get("data", {}).get("id", "unknown")
                 post_url = f"https://www.binance.com/square/post/{post_id}"
-                post_count += 1
                 fail_streak = 0
-                log.info(f"   ✅ Success! Post #{post_count} → {post_url}")
+                log.info(f"   ✅ Success! Post #{bot_state['posts_published'] + 1} → {post_url}")
                 log.info(f"   Content preview: {content[:80]}...")
 
-                # Track recency
                 with state_lock:
                     recent_coins.append(coin["tag"])
                     recent_types.append(post_type["name"])
@@ -1474,10 +1559,10 @@ def run_daily_session():
                     if len(recent_types) > 6:
                         recent_types.pop(0)
                         
-                    bot_state["schedule"][idx]["status"] = "Published"
+                    bot_state["schedule"][next_item_idx]["status"] = "Published"
                     bot_state["posts_published"] += 1
                     bot_state["recent_posts"].insert(0, {
-                        "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                        "time": get_ist_now().strftime("%I:%M:%S %p IST"),
                         "type": post_type["name"],
                         "content": content,
                         "status": "Success",
@@ -1485,17 +1570,16 @@ def run_daily_session():
                     })
                     if len(bot_state["recent_posts"]) > 10:
                         bot_state["recent_posts"].pop()
-
             else:
                 error_code = result.get("code", "unknown")
                 error_msg  = result.get("message", "no message")
                 log.warning(f"   ⚠️ Binance rejected post. Code: {error_code} | {error_msg}")
 
                 with state_lock:
-                    bot_state["schedule"][idx]["status"] = f"Rejected"
+                    bot_state["schedule"][next_item_idx]["status"] = f"Rejected"
                     bot_state["posts_failed"] += 1
                     bot_state["recent_posts"].insert(0, {
-                        "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                        "time": get_ist_now().strftime("%I:%M:%S %p IST"),
                         "type": post_type["name"],
                         "content": content[:80] + "...",
                         "status": f"Rejected ({error_code})",
@@ -1504,10 +1588,9 @@ def run_daily_session():
                     if len(bot_state["recent_posts"]) > 10:
                         bot_state["recent_posts"].pop()
 
-                # Handle known error codes
                 if error_code in ("10001", "20001"):
                     log.error("   Invalid or missing API key. Check BINANCE_SQUARE_KEY.")
-                    return  # Fatal — stop session
+                    return
                 elif error_code == "40003":
                     log.warning("   Daily post limit hit. Stopping for today.")
                     break
@@ -1515,18 +1598,16 @@ def run_daily_session():
                     log.warning("   Sensitive content detected. Skipping this post.")
                 elif error_code == "30001":
                     log.error("   Account banned. Contact Binance support.")
-                    return  # Fatal
+                    return
 
         except requests.exceptions.RequestException as e:
             log.error(f"   Network error posting to Binance Square: {e}")
             with state_lock:
-                bot_state["schedule"][idx]["status"] = "Network Error"
+                bot_state["schedule"][next_item_idx]["status"] = "Network Error"
                 bot_state["posts_failed"] += 1
             fail_streak += 1
-
-    with state_lock:
-        bot_state["status"] = "Daily session complete"
-    log.info(f"\n🏁 Session complete. {post_count}/{n_posts} posts published successfully.")
+            
+        save_bot_state()
 
 
 # ─────────────────────────────────────────────
@@ -2117,7 +2198,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <div class="scroll-container timeline" id="schedule-container">
                 <div class="timeline-item pending">
                     <div class="timeline-content">
-                        <span class="timeline-time">--:-- UTC</span>
+                        <span class="timeline-time">--:-- IST</span>
                         <div class="timeline-details">
                             <span class="timeline-coin">Waiting</span><br>
                             <span>Initialize scheduler</span>
@@ -2504,7 +2585,7 @@ def api_post_now():
                     
                 bot_state["posts_published"] += 1
                 bot_state["recent_posts"].insert(0, {
-                    "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                    "time": get_ist_now().strftime("%I:%M:%S %p IST"),
                     "type": post_type["name"],
                     "content": content,
                     "status": "Success",
@@ -2512,6 +2593,7 @@ def api_post_now():
                 })
                 if len(bot_state["recent_posts"]) > 10:
                     bot_state["recent_posts"].pop()
+            save_bot_state()
             
             log.info(f"   ✅ Manual success! Post → {post_url}")
             return jsonify({"success": True, "url": post_url, "content": content})
@@ -2523,7 +2605,7 @@ def api_post_now():
             with state_lock:
                 bot_state["posts_failed"] += 1
                 bot_state["recent_posts"].insert(0, {
-                    "time": datetime.utcnow().strftime("%H:%M:%S UTC"),
+                    "time": get_ist_now().strftime("%I:%M:%S %p IST"),
                     "type": post_type["name"],
                     "content": content[:80] + "...",
                     "status": f"Rejected ({error_code})",
@@ -2531,6 +2613,7 @@ def api_post_now():
                 })
                 if len(bot_state["recent_posts"]) > 10:
                     bot_state["recent_posts"].pop()
+            save_bot_state()
                     
             return jsonify({"success": False, "error": f"Binance error {error_code}: {error_msg}"}), 400
             
@@ -2560,6 +2643,20 @@ def api_update_news():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/newsdata", methods=["GET"])
+def api_get_newsdata():
+    try:
+        import json
+        if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
+            with open("newsdata.json", "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return jsonify(data)
+        return jsonify([])
+    except Exception as e:
+        log.error(f"Failed to read newsdata.json: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ─────────────────────────────────────────────
 # BACKGROUND WORKER & THREAD CONTROL
 # ─────────────────────────────────────────────
@@ -2571,19 +2668,46 @@ def background_worker():
     with state_lock:
         bot_state["is_running"] = True
     
+    # Reload state at thread startup
+    load_bot_state()
+
     while True:
         try:
-            run_daily_session()
+            now_ist = get_ist_now()
+            cycle_start = get_cycle_start(now_ist)
+            cycle_end = get_cycle_end(now_ist)
+
+            if now_ist < cycle_start:
+                wait_seconds = (cycle_start - now_ist).total_seconds()
+                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                
+                # Reset previous stats if not already reset
+                if bot_state["posts_published"] > 0 or bot_state["posts_failed"] > 0 or bot_state["schedule"]:
+                    reset_daily_cycle()
+                
+                responsive_sleep(wait_seconds, "Sleeping until cycle start (11:30 AM IST)")
+                
+            elif now_ist >= cycle_end:
+                tomorrow_start = get_cycle_start(now_ist + timedelta(days=1))
+                wait_seconds = (tomorrow_start - now_ist).total_seconds()
+                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                
+                # Reset cycle
+                reset_daily_cycle()
+                
+                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (11:30 AM IST)")
+                
+            else:
+                # We are inside the active window! Run/Resume daily session
+                run_daily_session()
+                time.sleep(10)
+                    
         except Exception as e:
-            log.error(f"Fatal error in daily session: {e}")
+            log.error(f"Error in background worker loop: {e}")
             with state_lock:
                 bot_state["error_message"] = str(e)
-                bot_state["status"] = "Error encountered"
-        
-        with state_lock:
-            bot_state["status"] = "Sleeping until next day's active window"
-        log.info("💤 Daily session complete. Sleeping 8 hours before building next schedule...")
-        time.sleep(28800)
+                bot_state["status"] = f"Error: {str(e)[:40]}"
+            time.sleep(60)
 
 
 def start_background_thread():
