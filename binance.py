@@ -47,6 +47,8 @@ if not GEMINI_API_KEYS:
             GEMINI_API_KEYS.append(key.strip())
 
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
+JSONSTORAGE_API_KEY   = os.getenv("jsonStorageNet") or os.getenv("JSONSTORAGE_API_KEY")
+JSONSTORAGE_STATE_ID  = os.getenv("JSONSTORAGE_STATE_ID")
 BINANCE_POST_URL      = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
 BINANCE_UPLOAD_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/presignedUrl"
 BINANCE_STATUS_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/imageStatus"
@@ -101,6 +103,114 @@ bot_state = {
 }
 
 STATE_FILE = "bot_state.json"
+JSONSTORAGE_BASE_URL = "https://api.jsonstorage.net/v1/json/"
+IDS_CACHE_FILE = ".jsonstorage_ids.json"
+
+class JsonStorageManager:
+    def __init__(self, api_key: str, state_id: str):
+        self.api_key = api_key
+        self.state_id = state_id
+
+    def get_url(self, item_id: str) -> str:
+        url = f"{JSONSTORAGE_BASE_URL}{item_id}"
+        if self.api_key:
+            url += f"?apiKey={self.api_key}"
+        return url
+
+    def initialize(self):
+        if not self.api_key:
+            log.warning("No jsonStorageNet API key configured. Falling back to local files.")
+            return False
+
+        # Load IDs from local cache if not set in env
+        cache = {}
+        if os.path.exists(IDS_CACHE_FILE) and os.path.getsize(IDS_CACHE_FILE) > 0:
+            try:
+                import json
+                with open(IDS_CACHE_FILE, "r", encoding="utf-8") as f:
+                    cache = json.load(f)
+            except Exception:
+                pass
+
+        if not self.state_id:
+            self.state_id = cache.get("state_id")
+
+        try:
+            # 1. Initialize bot_state storage
+            if not self.state_id:
+                log.info("Creating new bot_state item on JsonStorage.net...")
+                initial_state = {}
+                if os.path.exists(STATE_FILE) and os.path.getsize(STATE_FILE) > 0:
+                    try:
+                        import json
+                        with open(STATE_FILE, "r", encoding="utf-8") as f:
+                            initial_state = json.load(f)
+                    except Exception:
+                        pass
+                self.state_id = self.create_data(initial_state)
+                if self.state_id:
+                    log.warning(f"⚠️ Created bot_state item on JsonStorage. ID: {self.state_id}")
+                    log.warning(f"⚠️ PLEASE ADD 'JSONSTORAGE_STATE_ID={self.state_id}' TO YOUR RENDER ENVIRONMENT VARIABLES!")
+            
+            # Save generated ID to local cache
+            if self.state_id:
+                try:
+                    import json
+                    with open(IDS_CACHE_FILE, "w", encoding="utf-8") as f:
+                        json.dump({"state_id": self.state_id}, f, indent=2)
+                except Exception:
+                    pass
+
+            if self.state_id:
+                log.info(f"JsonStorage.net initialized. State ID: {self.state_id}")
+                return True
+            return False
+
+        except Exception as e:
+            log.error(f"Failed to initialize JsonStorage.net: {e}. Falling back to local files.")
+            return False
+
+    def load_data(self, item_id: str):
+        if not item_id:
+            return None
+        try:
+            url = self.get_url(item_id)
+            res = requests.get(url, timeout=10)
+            res.raise_for_status()
+            return res.json()
+        except Exception as e:
+            log.error(f"Error reading item {item_id} from JsonStorage: {e}")
+            return None
+
+    def save_data(self, item_id: str, data):
+        if not item_id:
+            return False
+        try:
+            url = self.get_url(item_id)
+            headers = {"Content-Type": "application/json; charset=utf-8"}
+            res = requests.put(url, headers=headers, json=data, timeout=10)
+            res.raise_for_status()
+            return True
+        except Exception as e:
+            log.error(f"Error writing to item {item_id} on JsonStorage: {e}")
+            return False
+
+    def create_data(self, data):
+        try:
+            url = "https://api.jsonstorage.net/v1/json"
+            if self.api_key:
+                url += f"?apiKey={self.api_key}"
+            headers = {"Content-Type": "application/json; charset=utf-8"}
+            res = requests.post(url, headers=headers, json=data, timeout=10)
+            res.raise_for_status()
+            uri = res.json().get("uri", "")
+            item_id = uri.replace(JSONSTORAGE_BASE_URL, "")
+            return item_id
+        except Exception as e:
+            log.error(f"Error creating new item on JsonStorage: {e}")
+            return None
+
+jsonstorage_manager = JsonStorageManager(JSONSTORAGE_API_KEY, JSONSTORAGE_STATE_ID)
 
 def save_bot_state():
     with state_lock:
@@ -121,10 +231,30 @@ def save_bot_state():
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump(state_to_save, f, indent=2)
     except Exception as e:
-        log.error(f"Failed to save bot state: {e}")
+        log.error(f"Failed to save bot state locally: {e}")
+
+    if jsonstorage_manager.state_id:
+        def push_state():
+            jsonstorage_manager.save_data(jsonstorage_manager.state_id, state_to_save)
+        threading.Thread(target=push_state, daemon=True).start()
 
 def load_bot_state():
     global bot_state
+    
+    if jsonstorage_manager.initialize():
+        log.info("Syncing state from JsonStorage.net to local files...")
+        
+        # Sync bot state
+        cloud_state = jsonstorage_manager.load_data(jsonstorage_manager.state_id)
+        if cloud_state:
+            try:
+                import json
+                with open(STATE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(cloud_state, f, indent=2)
+                log.info("Synced bot state from cloud to local bot_state.json")
+            except Exception as e:
+                log.error(f"Failed to write downloaded bot state locally: {e}")
+
     if os.path.exists(STATE_FILE) and os.path.getsize(STATE_FILE) > 0:
         try:
             import json
@@ -2636,7 +2766,10 @@ def api_update_news():
         import json
         with open("newsdata.json", "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        log.info(f"📰 Successfully updated newsdata.json with {len(data)} items via API.")
+        log.info(f"📰 Successfully updated newsdata.json with {len(data)} items locally.")
+
+
+
         return jsonify({"success": True, "message": f"Successfully updated newsdata.json with {len(data)} items"})
     except Exception as e:
         log.error(f"Failed to write to newsdata.json: {e}")
