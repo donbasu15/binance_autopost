@@ -3,3 +3,6 @@ requests
 python-dotenv
 Flask
 gunicorn
+pandas
+numpy
+matplotlib

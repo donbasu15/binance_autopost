@@ -58,10 +58,10 @@ FEAR_GREED_URL        = "https://api.alternative.me/fng/"
 
 BINANCE_POST_ENDPOINT = BINANCE_POST_URL
 
-DATA_REFRESH_EVERY = 3
+DATA_REFRESH_EVERY = 2
 
-POSTS_PER_DAY_MIN = 60
-POSTS_PER_DAY_MAX = 80
+POSTS_PER_DAY_MIN = 40
+POSTS_PER_DAY_MAX = 60
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
@@ -844,6 +844,7 @@ def generate_advanced_chart(symbol: str, klines: list) -> bytes | None:
         log.warning(f"Not enough klines data ({len(klines) if klines else 0}) to generate chart for {symbol}")
         return None
     
+    fig = None
     try:
         import pandas as pd
         import numpy as np
@@ -955,12 +956,14 @@ def generate_advanced_chart(symbol: str, klines: list) -> bytes | None:
         
         buf = BytesIO()
         plt.savefig(buf, format='png', dpi=120)
-        plt.close()
         buf.seek(0)
         return buf.getvalue()
     except Exception as e:
         log.warning(f"Failed to generate matplotlib chart for {symbol}: {e}")
         return None
+    finally:
+        if fig is not None:
+            plt.close(fig)
 
 
 def retrieve_search_image(rotator: GeminiClientRotator, symbol: str, topic: str) -> bytes | None:
