@@ -22,6 +22,7 @@ import random
 import logging
 from logging.handlers import RotatingFileHandler
 import requests
+import json
 import threading
 import sys
 from datetime import datetime, timedelta
@@ -103,7 +104,8 @@ bot_state = {
 }
 
 STATE_FILE = "bot_state.json"
-JSONSTORAGE_BASE_URL = "https://api.jsonstorage.net/v1/json/"
+STATE_SERVER_URL = os.getenv("STATE_SERVER_URL") or os.getenv("JSONSTORAGE_BASE_URL")
+JSONSTORAGE_BASE_URL = STATE_SERVER_URL.rstrip("/") + "/" if STATE_SERVER_URL else "https://api.jsonstorage.net/v1/json/"
 IDS_CACHE_FILE = ".jsonstorage_ids.json"
 
 class JsonStorageManager:
@@ -118,7 +120,9 @@ class JsonStorageManager:
         return url
 
     def initialize(self):
-        if not self.api_key:
+        # Check if we are using the default JsonStorage.net or a custom URL
+        is_custom_server = "api.jsonstorage.net" not in JSONSTORAGE_BASE_URL
+        if not self.api_key and not is_custom_server:
             log.warning("No jsonStorageNet API key configured. Falling back to local files.")
             return False
 
@@ -197,7 +201,7 @@ class JsonStorageManager:
 
     def create_data(self, data):
         try:
-            url = "https://api.jsonstorage.net/v1/json"
+            url = JSONSTORAGE_BASE_URL.rstrip("/")
             if self.api_key:
                 url += f"?apiKey={self.api_key}"
             headers = {"Content-Type": "application/json; charset=utf-8"}
@@ -311,6 +315,39 @@ log = logging.getLogger(__name__)
 memory_handler = MemoryLogHandler(last_log_messages)
 memory_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 log.addHandler(memory_handler)
+
+
+# ─────────────────────────────────────────────
+# CRYPTOPANIC NEWS FETCHING
+# ─────────────────────────────────────────────
+
+def fetch_cryptopanic_news() -> list[dict]:
+    """Fetches cryptopanic news directly from GitHub JSON endpoint."""
+    url = "https://raw.githubusercontent.com/donbasu15/news_bot/refs/heads/main/cryptopanic_news.json"
+    try:
+        r = requests.get(url, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if isinstance(data, list):
+            # Save a local cache copy as backup
+            try:
+                with open("newsdata.json", "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+            except Exception as le:
+                log.warning(f"Failed to save cryptopanic news cache: {le}")
+            return data
+    except Exception as e:
+        log.error(f"Failed to fetch cryptopanic news from GitHub: {e}")
+    
+    # Fallback to local cache if GitHub is down/rate-limited
+    try:
+        if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
+            with open("newsdata.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        log.error(f"Failed to read cached newsdata.json: {e}")
+    return []
+
 
 load_bot_state()
 
@@ -885,22 +922,19 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
     if trending:
         lines.append(f"Currently Trending: {', '.join(trending[:5])}")
 
-    # Load news from newsdata.json
+    # Load news from cryptopanic_news.json URL (directly from GitHub)
     local_news = []
     try:
-        import json
-        if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
-            with open("newsdata.json", "r", encoding="utf-8") as f:
-                news_list = json.load(f)
-            if news_list and isinstance(news_list, list):
-                for item in news_list:
-                    title = item.get("title")
-                    source = item.get("source", "unknown")
-                    sentiment = item.get("sentiment", "neutral")
-                    if title:
-                        local_news.append(f"{title} (Source: {source}, Sentiment: {sentiment})")
+        news_list = fetch_cryptopanic_news()
+        if news_list and isinstance(news_list, list):
+            for item in news_list:
+                title = item.get("title")
+                source = item.get("source", "unknown")
+                sentiment = item.get("sentiment", "neutral")
+                if title:
+                    local_news.append(f"{title} (Source: {source}, Sentiment: {sentiment})")
     except Exception as e:
-        log.warning(f"Failed to read newsdata.json inside format_coin_data: {e}")
+        log.warning(f"Failed to fetch cryptopanic news inside format_coin_data: {e}")
 
     # General news headlines
     news = local_news + global_data.get("news", [])
@@ -1546,18 +1580,15 @@ def execute_active_schedule():
                 post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[4])
                 coin = None
                 try:
-                    import json
-                    if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
-                        with open("newsdata.json", "r", encoding="utf-8") as f:
-                            news_list = json.load(f)
-                        if news_list and isinstance(news_list, list):
-                            all_titles = " ".join([it.get("title", "").upper() for it in news_list])
-                            mentioned_coins = []
-                            for c in COINS:
-                                if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
-                                    mentioned_coins.append(c)
-                            if mentioned_coins:
-                                coin = random.choice(mentioned_coins)
+                    news_list = fetch_cryptopanic_news()
+                    if news_list and isinstance(news_list, list):
+                        all_titles = " ".join([it.get("title", "").upper() for it in news_list])
+                        mentioned_coins = []
+                        for c in COINS:
+                            if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
+                                mentioned_coins.append(c)
+                        if mentioned_coins:
+                            coin = random.choice(mentioned_coins)
                 except Exception as e:
                     log.warning(f"Error scanning news headlines for coin: {e}")
                 
@@ -2598,21 +2629,18 @@ def api_post_now():
             # Use standard news_reaction type
             post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[4])
             
-            # Check newsdata.json to scan for any coin mentions to set as primary coin
+            # Scan cryptopanic news for any coin mentions to set as primary coin
             coin = None
             try:
-                import json
-                if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
-                    with open("newsdata.json", "r", encoding="utf-8") as f:
-                        news_list = json.load(f)
-                    if news_list and isinstance(news_list, list):
-                        all_titles = " ".join([item.get("title", "").upper() for item in news_list])
-                        mentioned_coins = []
-                        for c in COINS:
-                            if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in title_upper:
-                                mentioned_coins.append(c)
-                        if mentioned_coins:
-                            coin = random.choice(mentioned_coins)
+                news_list = fetch_cryptopanic_news()
+                if news_list and isinstance(news_list, list):
+                    all_titles = " ".join([item.get("title", "").upper() for item in news_list])
+                    mentioned_coins = []
+                    for c in COINS:
+                        if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
+                            mentioned_coins.append(c)
+                    if mentioned_coins:
+                        coin = random.choice(mentioned_coins)
             except Exception as e:
                 log.warning(f"Error scanning news headlines for coin: {e}")
             
@@ -2754,39 +2782,17 @@ def api_post_now():
 
 @app.route("/api/news", methods=["POST"])
 def api_update_news():
-    data = request.get_json()
-    if not isinstance(data, list):
-        return jsonify({"success": False, "error": "Invalid format, expected list of news objects"}), 400
-    
-    for idx, item in enumerate(data):
-        if not isinstance(item, dict) or "title" not in item:
-            return jsonify({"success": False, "error": f"Item at index {idx} missing 'title' field"}), 400
-            
-    try:
-        import json
-        with open("newsdata.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        log.info(f"📰 Successfully updated newsdata.json with {len(data)} items locally.")
-
-
-
-        return jsonify({"success": True, "message": f"Successfully updated newsdata.json with {len(data)} items"})
-    except Exception as e:
-        log.error(f"Failed to write to newsdata.json: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+    log.warning("POST /api/news is deprecated. News data is now fetched directly from GitHub.")
+    return jsonify({"success": True, "message": "Deprecated. News data is now fetched directly from GitHub."})
 
 
 @app.route("/api/newsdata", methods=["GET"])
 def api_get_newsdata():
     try:
-        import json
-        if os.path.exists("newsdata.json") and os.path.getsize("newsdata.json") > 0:
-            with open("newsdata.json", "r", encoding="utf-8") as f:
-                data = json.load(f)
-            return jsonify(data)
-        return jsonify([])
+        data = fetch_cryptopanic_news()
+        return jsonify(data)
     except Exception as e:
-        log.error(f"Failed to read newsdata.json: {e}")
+        log.error(f"Failed to fetch cryptopanic news for endpoint: {e}")
         return jsonify({"error": str(e)}), 500
 
 

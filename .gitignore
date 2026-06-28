@@ -12,3 +12,6 @@ ENV/
 dist/
 build/
 *.spec
+
+# Custom State Server Data Storage
+data/

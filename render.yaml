@@ -11,4 +11,15 @@ services:
         sync: false
       - key: BINANCE_SQUARE_KEY
         sync: false
+      - key: STATE_SERVER_URL
+        sync: false
+
+  - type: web
+    name: bipass-state-server
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn state_server:app --workers 1 --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: "10001"
 
