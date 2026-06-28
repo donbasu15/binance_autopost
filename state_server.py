@@ -10,31 +10,29 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def get_state_path(item_id: str) -> str:
-    # Ensure no path traversal and translate slashes to underscores
-    clean_id = item_id.replace("/", "_")
-    safe_id = "".join(c for c in clean_id if c.isalnum() or c in "-_")
-    return os.path.join(DATA_DIR, f"state_{safe_id}.json")
+    # Always store in the single state_store.json file to prevent disk buildup
+    return os.path.join(DATA_DIR, "state_store.json")
 
 @app.route("/", methods=["GET"])
 def index():
     # Render a premium status page
     states_info = []
-    if os.path.exists(DATA_DIR):
-        for filename in os.listdir(DATA_DIR):
-            if filename.startswith("state_") and filename.endswith(".json"):
-                state_id = filename[6:-5]
-                filepath = os.path.join(DATA_DIR, filename)
-                try:
-                    mtime = os.path.getmtime(filepath)
-                    last_updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %I:%M:%S %p")
-                    size = os.path.getsize(filepath)
-                    states_info.append({
-                        "id": state_id,
-                        "last_updated": last_updated,
-                        "size": f"{size} bytes"
-                    })
-                except Exception:
-                    pass
+    json_content = None
+    filepath = os.path.join(DATA_DIR, "state_store.json")
+    if os.path.exists(filepath):
+        try:
+            mtime = os.path.getmtime(filepath)
+            last_updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %I:%M:%S %p")
+            size = os.path.getsize(filepath)
+            states_info.append({
+                "id": "state_store",
+                "last_updated": last_updated,
+                "size": f"{size} bytes"
+            })
+            with open(filepath, "r", encoding="utf-8") as f:
+                json_content = json.dumps(json.load(f), indent=2, ensure_ascii=False)
+        except Exception:
+            pass
     
     # Premium Dark Mode Glassmorphism HTML
     html_content = """
@@ -162,6 +160,20 @@ def index():
                 color: var(--text-muted);
                 padding: 40px 0;
             }
+            pre {
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid var(--card-border);
+                border-radius: 8px;
+                padding: 16px;
+                overflow-x: auto;
+                max-height: 400px;
+                overflow-y: auto;
+            }
+            code {
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 13px;
+                color: #0ecb81;
+            }
             footer {
                 text-align: center;
                 margin-top: auto;
@@ -206,6 +218,13 @@ def index():
                 {% endif %}
             </div>
             
+            {% if json_content %}
+            <div class="card">
+                <h2>Current State Data</h2>
+                <pre><code>{{ json_content }}</code></pre>
+            </div>
+            {% endif %}
+            
             <footer>
                 Powered by BiPass Local State Server
             </footer>
@@ -213,7 +232,7 @@ def index():
     </body>
     </html>
     """
-    return render_template_string(html_content, states_info=states_info)
+    return render_template_string(html_content, states_info=states_info, json_content=json_content)
 
 @app.route("/v1/json", methods=["POST"])
 def create_state():
@@ -222,14 +241,14 @@ def create_state():
     except Exception:
         data = {}
     
-    state_id = str(uuid.uuid4())
+    state_id = "state_store"
     filepath = get_state_path(state_id)
     
     try:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
         
-        # Build the exact URI as expected by JsonStorageManager
+        # Build the exact URI as expected by StateServerManager
         base_url = request.url_root.rstrip("/")
         uri = f"{base_url}/v1/json/{state_id}"
         return jsonify({"uri": uri}), 200
