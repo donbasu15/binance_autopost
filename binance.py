@@ -95,13 +95,16 @@ bot_state = {
     "posts_failed": 0,
     "n_posts_scheduled": 0,
     "schedule": [],  # list of {"time": str, "status": str, "coin": str, "type": str}
-    "recent_posts": [],  # list of {"time": str, "content": str, "status": str, "url": str}
+    "recent_posts": [],  # Kept empty here to avoid large storage in autoposter
     "last_log_messages": last_log_messages,
     "recent_coins": [],
     "recent_types": [],
     "is_running": False,
     "error_message": None
 }
+
+recent_posts_cache = []  # In-memory cache for recent posts, synced with state server
+
 
 STATE_FILE = "bot_state.json"
 IDS_CACHE_FILE = ".state_id.json"
@@ -224,7 +227,7 @@ def save_bot_state():
             "posts_failed": bot_state["posts_failed"],
             "n_posts_scheduled": bot_state["n_posts_scheduled"],
             "schedule": bot_state["schedule"],
-            "recent_posts": bot_state["recent_posts"],
+            "recent_posts": [],  # Avoid storing recent posts locally to keep file size small
             "recent_coins": bot_state["recent_coins"],
             "recent_types": bot_state["recent_types"],
             "error_message": bot_state["error_message"],
@@ -243,7 +246,7 @@ def save_bot_state():
         threading.Thread(target=push_state, daemon=True).start()
 
 def load_bot_state():
-    global bot_state
+    global bot_state, recent_posts_cache
     
     if state_server_manager.initialize():
         log.info("Syncing state from State Server to local files...")
@@ -259,6 +262,12 @@ def load_bot_state():
             except Exception as e:
                 log.error(f"Failed to write downloaded bot state locally: {e}")
 
+        # Sync todays_posts from state server to in-memory cache
+        cloud_posts = state_server_manager.load_data("todays_posts")
+        if isinstance(cloud_posts, list):
+            recent_posts_cache = cloud_posts
+            log.info(f"Loaded {len(recent_posts_cache)} posts from state server into recent_posts_cache")
+
     if os.path.exists(STATE_FILE) and os.path.getsize(STATE_FILE) > 0:
         try:
             import json
@@ -270,7 +279,33 @@ def load_bot_state():
                         bot_state[k] = v
             log.info("Successfully loaded bot state from persistent file.")
         except Exception as e:
+
             log.error(f"Failed to load bot state: {e}")
+
+def add_recent_post(post_type_name, content, status, url):
+    global recent_posts_cache
+    post_item = {
+        "time": get_ist_now().strftime("%I:%M:%S %p IST"),
+        "time_iso": get_ist_now().isoformat(),
+        "type": post_type_name,
+        "content": content,
+        "status": status,
+        "url": url
+    }
+    with state_lock:
+        recent_posts_cache.insert(0, post_item)
+        # Keep only the last 24 hours
+        cutoff = get_ist_now() - timedelta(hours=24)
+        recent_posts_cache = [
+            p for p in recent_posts_cache
+            if p.get("time_iso") and datetime.fromisoformat(p["time_iso"]) >= cutoff
+        ][:50]
+    
+    if state_server_manager.server_url:
+        def push_posts():
+            state_server_manager.save_data("todays_posts", recent_posts_cache)
+        threading.Thread(target=push_posts, daemon=True).start()
+
 
 class MemoryLogHandler(logging.Handler):
     def __init__(self, target_list, max_items=50):
@@ -603,19 +638,25 @@ class LiveDataFetcher:
         coins = data.get("coins", [])[:7]
         return [c["item"]["symbol"].upper() for c in coins]
 
-    # ── cryptocurrency.cv: latest news headlines (no key needed) ──
+    # ── cryptocurrency.cv was removed because it was non-functional/blocked. Fetching from working GitHub raw JSON source ──
     def fetch_news_headlines(self, limit: int = 15) -> list[str]:
-        # Using the existing cryptonews URL since it's the specific news source
-        data = self._get("https://cryptocurrency.cv/api/news", params={"limit": limit})
-        if not data or "articles" not in data:
+        try:
+            news_list = fetch_cryptopanic_news()
+            if not news_list or not isinstance(news_list, list):
+                return []
+            headlines = []
+            for item in news_list[:limit]:
+                title = item.get("title", "").strip()
+                source = item.get("source", "unknown")
+                sentiment = item.get("sentiment", "neutral")
+                if title:
+                    headlines.append(f"{title} (Source: {source}, Sentiment: {sentiment})")
+            log.info(f"  📰 Fetched {len(headlines)} news headlines from GitHub source")
+            return headlines
+        except Exception as e:
+            log.warning(f"Failed to fetch news headlines from GitHub: {e}")
             return []
-        headlines = []
-        for a in data["articles"]:
-            title = a.get("title", "").strip()
-            if title:
-                headlines.append(title)
-        log.info(f"  📰 Fetched {len(headlines)} news headlines")
-        return headlines
+
 
     # ── alternative.me: Fear & Greed Index ──
     def fetch_fear_greed(self) -> dict:
@@ -922,22 +963,8 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
     if trending:
         lines.append(f"Currently Trending: {', '.join(trending[:5])}")
 
-    # Load news from cryptopanic_news.json URL (directly from GitHub)
-    local_news = []
-    try:
-        news_list = fetch_cryptopanic_news()
-        if news_list and isinstance(news_list, list):
-            for item in news_list:
-                title = item.get("title")
-                source = item.get("source", "unknown")
-                sentiment = item.get("sentiment", "neutral")
-                if title:
-                    local_news.append(f"{title} (Source: {source}, Sentiment: {sentiment})")
-    except Exception as e:
-        log.warning(f"Failed to fetch cryptopanic news inside format_coin_data: {e}")
-
-    # General news headlines
-    news = local_news + global_data.get("news", [])
+    # General news headlines from live data block
+    news = global_data.get("news", [])
     if news:
         lines.append("\nTop Crypto Headlines Right Now:")
         for h in news[:10]:
@@ -1438,9 +1465,10 @@ def responsive_sleep(seconds, status_prefix):
         now_ist = get_ist_now()
         with state_lock:
             bot_state["status"] = f"{status_prefix} | IST: {now_ist.strftime('%I:%M:%S %p')} (in {format_interval(int(remaining))})"
-        sleep_chunk = min(10, remaining)
+        sleep_chunk = min(1, remaining)
         time.sleep(sleep_chunk)
         remaining -= sleep_chunk
+
 
 def run_daily_session():
     global bot_state
@@ -1511,13 +1539,28 @@ def run_daily_session():
     execute_active_schedule()
 
 def get_cycle_start(dt_ist):
-    return dt_ist.replace(hour=11, minute=30, second=0, microsecond=0)
+    # If the time is before 7:30 AM, the cycle started yesterday at 11:30 AM
+    limit_time = dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+    if dt_ist < limit_time:
+        yesterday = dt_ist - timedelta(days=1)
+        return yesterday.replace(hour=11, minute=30, second=0, microsecond=0)
+    else:
+        return dt_ist.replace(hour=11, minute=30, second=0, microsecond=0)
 
 def get_cycle_end(dt_ist):
-    return dt_ist.replace(hour=19, minute=30, second=0, microsecond=0)
+    # If the time is before 7:30 AM, the cycle ends today at 7:30 AM
+    limit_time = dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+    if dt_ist < limit_time:
+        return dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+    else:
+        tomorrow = dt_ist + timedelta(days=1)
+        return tomorrow.replace(hour=7, minute=30, second=0, microsecond=0)
+
 
 def execute_active_schedule():
     global bot_state
+    
+    session_cycle_end = get_cycle_end(get_ist_now())
     
     rotator = GeminiClientRotator(GEMINI_API_KEYS)
     fetcher = LiveDataFetcher()
@@ -1535,7 +1578,7 @@ def execute_active_schedule():
     while True:
         # Check if the cycle has ended in the meantime
         now_ist = get_ist_now()
-        if now_ist >= get_cycle_end(now_ist):
+        if now_ist >= session_cycle_end:
             log.info("⏰ Posting cycle end reached. Terminating daily schedule execution.")
             break
             
@@ -1562,9 +1605,10 @@ def execute_active_schedule():
             
         # Re-check time after sleep
         now_ist = get_ist_now()
-        if now_ist >= get_cycle_end(now_ist):
+        if now_ist >= session_cycle_end:
             log.info("⏰ Posting cycle end reached after sleep. Terminating daily schedule execution.")
             break
+
 
         # Refresh live data periodically
         if next_item_idx > 0 and next_item_idx % DATA_REFRESH_EVERY == 0:
@@ -1722,15 +1766,7 @@ def execute_active_schedule():
                         
                     bot_state["schedule"][next_item_idx]["status"] = "Published"
                     bot_state["posts_published"] += 1
-                    bot_state["recent_posts"].insert(0, {
-                        "time": get_ist_now().strftime("%I:%M:%S %p IST"),
-                        "type": post_type["name"],
-                        "content": content,
-                        "status": "Success",
-                        "url": post_url
-                    })
-                    if len(bot_state["recent_posts"]) > 10:
-                        bot_state["recent_posts"].pop()
+                add_recent_post(post_type["name"], content, "Success", post_url)
             else:
                 error_code = result.get("code", "unknown")
                 error_msg  = result.get("message", "no message")
@@ -1739,15 +1775,8 @@ def execute_active_schedule():
                 with state_lock:
                     bot_state["schedule"][next_item_idx]["status"] = f"Rejected"
                     bot_state["posts_failed"] += 1
-                    bot_state["recent_posts"].insert(0, {
-                        "time": get_ist_now().strftime("%I:%M:%S %p IST"),
-                        "type": post_type["name"],
-                        "content": content[:80] + "...",
-                        "status": f"Rejected ({error_code})",
-                        "url": "#"
-                    })
-                    if len(bot_state["recent_posts"]) > 10:
-                        bot_state["recent_posts"].pop()
+                add_recent_post(post_type["name"], content[:80] + "...", f"Rejected ({error_code})", "#")
+
 
                 if error_code in ("10001", "20001"):
                     log.error("   Invalid or missing API key. Check BINANCE_SQUARE_KEY.")
@@ -2559,7 +2588,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         // Initial fetch and start interval
         fetchStatus();
-        setInterval(fetchStatus, 4000);
+        setInterval(fetchStatus, 1000);
     </script>
 </body>
 </html>
@@ -2597,10 +2626,11 @@ def api_status():
             "posts_failed": bot_state["posts_failed"],
             "n_posts_scheduled": bot_state["n_posts_scheduled"],
             "schedule": serializable_schedule,
-            "recent_posts": bot_state["recent_posts"],
+            "recent_posts": recent_posts_cache,
             "last_log_messages": bot_state["last_log_messages"],
             "error_message": bot_state["error_message"]
         })
+
 
 @app.route("/api/post-now", methods=["POST"])
 def api_post_now():
@@ -2742,15 +2772,7 @@ def api_post_now():
                     recent_types.pop(0)
                     
                 bot_state["posts_published"] += 1
-                bot_state["recent_posts"].insert(0, {
-                    "time": get_ist_now().strftime("%I:%M:%S %p IST"),
-                    "type": post_type["name"],
-                    "content": content,
-                    "status": "Success",
-                    "url": post_url
-                })
-                if len(bot_state["recent_posts"]) > 10:
-                    bot_state["recent_posts"].pop()
+            add_recent_post(post_type["name"], content, "Success", post_url)
             save_bot_state()
             
             log.info(f"   ✅ Manual success! Post → {post_url}")
@@ -2762,15 +2784,7 @@ def api_post_now():
             
             with state_lock:
                 bot_state["posts_failed"] += 1
-                bot_state["recent_posts"].insert(0, {
-                    "time": get_ist_now().strftime("%I:%M:%S %p IST"),
-                    "type": post_type["name"],
-                    "content": content[:80] + "...",
-                    "status": f"Rejected ({error_code})",
-                    "url": "#"
-                })
-                if len(bot_state["recent_posts"]) > 10:
-                    bot_state["recent_posts"].pop()
+            add_recent_post(post_type["name"], content[:80] + "...", f"Rejected ({error_code})", "#")
             save_bot_state()
                     
             return jsonify({"success": False, "error": f"Binance error {error_code}: {error_msg}"}), 400

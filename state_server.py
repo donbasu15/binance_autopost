@@ -10,29 +10,35 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def get_state_path(item_id: str) -> str:
-    # Always store in the single state_store.json file to prevent disk buildup
-    return os.path.join(DATA_DIR, "state_store.json")
+    # Safely convert item_id to a filename under DATA_DIR
+    safe_name = "".join([c for c in item_id if c.isalnum() or c in ("-", "_", ".")]).strip()
+    if not safe_name:
+        safe_name = "state_store"
+    return os.path.join(DATA_DIR, f"{safe_name}.json")
 
 @app.route("/", methods=["GET"])
 def index():
     # Render a premium status page
     states_info = []
-    json_content = None
-    filepath = os.path.join(DATA_DIR, "state_store.json")
-    if os.path.exists(filepath):
-        try:
-            mtime = os.path.getmtime(filepath)
-            last_updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %I:%M:%S %p")
-            size = os.path.getsize(filepath)
-            states_info.append({
-                "id": "state_store",
-                "last_updated": last_updated,
-                "size": f"{size} bytes"
-            })
-            with open(filepath, "r", encoding="utf-8") as f:
-                json_content = json.dumps(json.load(f), indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+    json_contents = {}
+    if os.path.exists(DATA_DIR):
+        for filename in sorted(os.listdir(DATA_DIR)):
+            if filename.endswith(".json"):
+                filepath = os.path.join(DATA_DIR, filename)
+                try:
+                    mtime = os.path.getmtime(filepath)
+                    last_updated = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %I:%M:%S %p")
+                    size = os.path.getsize(filepath)
+                    state_id = filename[:-5]
+                    states_info.append({
+                        "id": state_id,
+                        "last_updated": last_updated,
+                        "size": f"{size} bytes"
+                    })
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        json_contents[state_id] = json.dumps(json.load(f), indent=2, ensure_ascii=False)
+                except Exception:
+                    pass
     
     # Premium Dark Mode Glassmorphism HTML
     html_content = """
@@ -218,11 +224,13 @@ def index():
                 {% endif %}
             </div>
             
-            {% if json_content %}
-            <div class="card">
-                <h2>Current State Data</h2>
-                <pre><code>{{ json_content }}</code></pre>
-            </div>
+            {% if json_contents %}
+                {% for state_id, content in json_contents.items() %}
+                <div class="card">
+                    <h2>Current State Data: <span class="state-id">{{ state_id }}</span></h2>
+                    <pre><code>{{ content }}</code></pre>
+                </div>
+                {% endfor %}
             {% endif %}
             
             <footer>
@@ -232,7 +240,7 @@ def index():
     </body>
     </html>
     """
-    return render_template_string(html_content, states_info=states_info, json_content=json_content)
+    return render_template_string(html_content, states_info=states_info, json_contents=json_contents)
 
 @app.route("/v1/json", methods=["POST"])
 def create_state():

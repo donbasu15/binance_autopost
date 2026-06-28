@@ -3,9 +3,98 @@
   "n_posts_scheduled": 0,
   "posts_failed": 0,
   "posts_published": 0,
-  "recent_coins": [],
-  "recent_posts": [],
-  "recent_types": [],
+  "recent_coins": [
+    "$PEPE",
+    "$TIA",
+    "$DOGE",
+    "$SOL",
+    "$TIA",
+    "$ARB",
+    "$SUI",
+    "$TIA",
+    "$XRP",
+    "$LINK"
+  ],
+  "recent_posts": [
+    {
+      "content": "Institutions won't touch public blockchains because they can't risk the information leakage. Visible positions and front-running are massive dealbreakers for big money.\n\nPrivacy isn't a luxury. It's the foundation.\n\nWhile the market bleeds and retail chases memes, the real institutional play is building secure, private infrastructure. $LINK stays central to this shift. \u26d3\ufe0f\n\n#DeFi #BTC #Altcoins #ETH ",
+      "status": "Success",
+      "time": "07:31:08 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/339001623983714"
+    },
+    {
+      "content": "The CLARITY Act could unlock $56 trillion for $XRP. Most traders can't even wrap their heads around a number that big.\n\nPrice is sitting at $1.05 and looking a bit heavy below the EMA20, but don't get lost in the local chop. Regulatory clarity is the ultimate catalyst. The institutional floodgates are just waiting for the green light. \ud83d\ude80\n\n#ETH #CryptoTrading #BNB ",
+      "status": "Success",
+      "time": "07:29:22 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/339001191195218"
+    },
+    {
+      "content": "Ripple CEO claiming Saylor\u2019s Bitcoin strategy hurt the market is pure chaos. \nThe debate between long-term accumulation and market volatility isn't going away anytime soon.\nRegardless of the noise, $BTC isn't going anywhere.\nReal builders are just watching the liquidations. \ud83d\ude80\n\n#Bitcoin #CryptoNews #MarketSentiment ",
+      "status": "Success",
+      "time": "07:22:48 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/338999575654834"
+    },
+    {
+      "content": "$SUI sitting at $0.6873 with the market in pure extreme fear mode. \n\nFunny how everyone talks about \"the next big thing\" until the price is stuck under the $0.69 EMA. The funding rate is even negative. We are literally watching people pay to get out of their positions \ud83d\udc80\n\nIf $0.65 support cracks, don't come crying to me.\n\n#Bitcoin #blockchain #BullRun ",
+      "status": "Success",
+      "time": "07:22:22 PM IST",
+      "type": "dark_humor_take",
+      "url": "https://www.binance.com/square/post/338999467921074"
+    },
+    {
+      "content": "Fear & Greed index is sitting at 18 \u2014 Extreme Fear.\nThe market is bleeding and everyone is looking for the exit.\n$ARB is drifting sideways around $0.073900 while the trend stays bearish. \nHistorically, this level of fear is where the real bottom is built and smart money accumulates.\nExtreme fear usually precedes a bounce once the liquidations are out of the way. \nKeep an eye on $ETH support. \ud83d\udcc9\n\n#Ethereum #cryptomarket ",
+      "status": "Success",
+      "time": "07:20:18 PM IST",
+      "type": "fear_greed_take",
+      "url": "https://www.binance.com/square/post/338998962123570"
+    },
+    {
+      "content": "Ripple CEO claims Michael Saylor's Bitcoin strategy has actually hurt the broader crypto market.\nThat's a wild take.\nThe massive $BTC accumulation by MicroStrategy is literally what provides the liquidity and foundation for the whole space.\nTrying to blame the biggest success story in the industry for market volatility is just noise.\nPeople need to separate institutional adoption from short-term price action. \n\n#Ethereum #BNB #Web3 ",
+      "status": "Success",
+      "time": "07:15:00 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/338997659932817"
+    },
+    {
+      "content": "The talk about $SOL hitting $500 feels wild while the market is stuck in extreme fear.\nBut this shakeout is exactly what's needed.\nPrice is $71.75 and still holding above the EMA20 and EMA50.\nAs long as we stay above $64, the bullish structure holds.\nLet the weak hands get washed. \ud83d\udcc9\n\n#SOL #CryptoInvesting #TechnicalAnalysis ",
+      "status": "Success",
+      "time": "07:12:46 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/338997109564354"
+    },
+    {
+      "content": "Ripple's CEO claims Michael Saylor\u2019s $BTC strategy hurt the market. Bold claim. \n\nMost people just see the massive treasury growth and call it a win, but this debate on market dynamics is heating up. While $DOGE sits around $0.073670 dealing with some bearish momentum, the macro debate is clearly shifting toward how much institutional accumulation actually impacts volatility. \n\nExtreme fear is the current vibe, but these boardroom arguments usually precede a big move. \ud83d\udcc9\n\n#Bitcoin #Altcoins #Web3 #hodl ",
+      "status": "Success",
+      "time": "07:06:17 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/338995518653890"
+    },
+    {
+      "content": "Ripple CEO claims Michael Saylor's Bitcoin strategy has actually hurt the market. \nBold claim for sure. \nMost see $BTC adoption as the ultimate fuel, but some think the massive concentration in one strategy creates a single point of failure for the whole ecosystem. \nWhile the big players argue, $TIA is quietly holding above its EMAs at $0.3742. \nThe market is in extreme fear right now, which usually means the real moves are being built in silence. \ud83e\udea8\n\n#Altcoins #DeFi ",
+      "status": "Success",
+      "time": "06:58:31 PM IST",
+      "type": "news_reaction",
+      "url": "https://www.binance.com/square/post/338993608210961"
+    },
+    {
+      "content": "Market is drowning in extreme fear right now. \nThis is exactly when the weak hands exit. \n$PEPE is holding at $0.000002 with $7.1M in volume. \nIgnore the panic and the $DOGE shakeouts. \nConviction is everything. \ud83d\udc38\n\n#BullRun #Bitcoin #hodl ",
+      "status": "Success",
+      "time": "06:57:48 PM IST",
+      "type": "community_hold",
+      "url": "https://www.binance.com/square/post/338993434242370"
+    }
+  ],
+  "recent_types": [
+    "news_reaction",
+    "fear_greed_take",
+    "dark_humor_take",
+    "news_reaction",
+    "news_reaction",
+    "news_reaction"
+  ],
   "schedule": [],
   "start_time": "2026-06-27 11:43:31 PM IST",
   "status": "Reset: Waiting for next cycle"
