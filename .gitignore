@@ -15,3 +15,4 @@ build/
 
 # Custom State Server Data Storage
 data/
+.state_id.json

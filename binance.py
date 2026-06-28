@@ -48,8 +48,8 @@ if not GEMINI_API_KEYS:
             GEMINI_API_KEYS.append(key.strip())
 
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
-JSONSTORAGE_API_KEY   = os.getenv("jsonStorageNet") or os.getenv("JSONSTORAGE_API_KEY")
-JSONSTORAGE_STATE_ID  = os.getenv("JSONSTORAGE_STATE_ID")
+STATE_SERVER_URL      = os.getenv("STATE_SERVER_URL")
+STATE_ID              = os.getenv("STATE_ID")
 BINANCE_POST_URL      = "https://www.binance.com/bapi/composite/v1/public/pgc/openApi/content/add"
 BINANCE_UPLOAD_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/presignedUrl"
 BINANCE_STATUS_URL    = "https://www.binance.com/bapi/composite/v2/public/pgc/openApi/image/imageStatus"
@@ -104,29 +104,30 @@ bot_state = {
 }
 
 STATE_FILE = "bot_state.json"
-STATE_SERVER_URL = os.getenv("STATE_SERVER_URL") or os.getenv("JSONSTORAGE_BASE_URL")
-JSONSTORAGE_BASE_URL = STATE_SERVER_URL.rstrip("/") + "/" if STATE_SERVER_URL else "https://api.jsonstorage.net/v1/json/"
-IDS_CACHE_FILE = ".jsonstorage_ids.json"
+IDS_CACHE_FILE = ".state_id.json"
 
-class JsonStorageManager:
-    def __init__(self, api_key: str, state_id: str):
-        self.api_key = api_key
+class StateServerManager:
+    def __init__(self, server_url: str, state_id: str):
+        # Normalize server url to end with /v1/json/
+        if server_url:
+            self.server_url = server_url.rstrip("/")
+            if not self.server_url.endswith("/v1/json"):
+                self.server_url = self.server_url + "/v1/json/"
+            else:
+                self.server_url = self.server_url + "/"
+        else:
+            self.server_url = None
         self.state_id = state_id
 
     def get_url(self, item_id: str) -> str:
-        url = f"{JSONSTORAGE_BASE_URL}{item_id}"
-        if self.api_key:
-            url += f"?apiKey={self.api_key}"
-        return url
+        return f"{self.server_url}{item_id}"
 
     def initialize(self):
-        # Check if we are using the default JsonStorage.net or a custom URL
-        is_custom_server = "api.jsonstorage.net" not in JSONSTORAGE_BASE_URL
-        if not self.api_key and not is_custom_server:
-            log.warning("No jsonStorageNet API key configured. Falling back to local files.")
+        if not self.server_url:
+            log.warning("No STATE_SERVER_URL configured. State server features are disabled.")
             return False
 
-        # Load IDs from local cache if not set in env
+        # Load ID from local cache if not set in env
         cache = {}
         if os.path.exists(IDS_CACHE_FILE) and os.path.getsize(IDS_CACHE_FILE) > 0:
             try:
@@ -142,7 +143,7 @@ class JsonStorageManager:
         try:
             # 1. Initialize bot_state storage
             if not self.state_id:
-                log.info("Creating new bot_state item on JsonStorage.net...")
+                log.info("Creating new bot_state item on custom State Server...")
                 initial_state = {}
                 if os.path.exists(STATE_FILE) and os.path.getsize(STATE_FILE) > 0:
                     try:
@@ -153,8 +154,7 @@ class JsonStorageManager:
                         pass
                 self.state_id = self.create_data(initial_state)
                 if self.state_id:
-                    log.warning(f"⚠️ Created bot_state item on JsonStorage. ID: {self.state_id}")
-                    log.warning(f"⚠️ PLEASE ADD 'JSONSTORAGE_STATE_ID={self.state_id}' TO YOUR RENDER ENVIRONMENT VARIABLES!")
+                    log.warning(f"⚠️ Created bot_state item on State Server. ID: {self.state_id}")
             
             # Save generated ID to local cache
             if self.state_id:
@@ -166,16 +166,16 @@ class JsonStorageManager:
                     pass
 
             if self.state_id:
-                log.info(f"JsonStorage.net initialized. State ID: {self.state_id}")
+                log.info(f"State Server initialized. State ID: {self.state_id}")
                 return True
             return False
 
         except Exception as e:
-            log.error(f"Failed to initialize JsonStorage.net: {e}. Falling back to local files.")
+            log.error(f"Failed to initialize State Server: {e}.")
             return False
 
     def load_data(self, item_id: str):
-        if not item_id:
+        if not item_id or not self.server_url:
             return None
         try:
             url = self.get_url(item_id)
@@ -183,11 +183,11 @@ class JsonStorageManager:
             res.raise_for_status()
             return res.json()
         except Exception as e:
-            log.error(f"Error reading item {item_id} from JsonStorage: {e}")
+            log.error(f"Error reading item {item_id} from State Server: {e}")
             return None
 
     def save_data(self, item_id: str, data):
-        if not item_id:
+        if not item_id or not self.server_url:
             return False
         try:
             url = self.get_url(item_id)
@@ -196,25 +196,25 @@ class JsonStorageManager:
             res.raise_for_status()
             return True
         except Exception as e:
-            log.error(f"Error writing to item {item_id} on JsonStorage: {e}")
+            log.error(f"Error writing to item {item_id} on State Server: {e}")
             return False
 
     def create_data(self, data):
+        if not self.server_url:
+            return None
         try:
-            url = JSONSTORAGE_BASE_URL.rstrip("/")
-            if self.api_key:
-                url += f"?apiKey={self.api_key}"
+            url = self.server_url.rstrip("/")
             headers = {"Content-Type": "application/json; charset=utf-8"}
             res = requests.post(url, headers=headers, json=data, timeout=10)
             res.raise_for_status()
             uri = res.json().get("uri", "")
-            item_id = uri.replace(JSONSTORAGE_BASE_URL, "")
+            item_id = uri.replace(self.server_url, "")
             return item_id
         except Exception as e:
-            log.error(f"Error creating new item on JsonStorage: {e}")
+            log.error(f"Error creating new item on State Server: {e}")
             return None
 
-jsonstorage_manager = JsonStorageManager(JSONSTORAGE_API_KEY, JSONSTORAGE_STATE_ID)
+state_server_manager = StateServerManager(STATE_SERVER_URL, STATE_ID)
 
 def save_bot_state():
     with state_lock:
@@ -237,19 +237,19 @@ def save_bot_state():
     except Exception as e:
         log.error(f"Failed to save bot state locally: {e}")
 
-    if jsonstorage_manager.state_id:
+    if state_server_manager.state_id:
         def push_state():
-            jsonstorage_manager.save_data(jsonstorage_manager.state_id, state_to_save)
+            state_server_manager.save_data(state_server_manager.state_id, state_to_save)
         threading.Thread(target=push_state, daemon=True).start()
 
 def load_bot_state():
     global bot_state
     
-    if jsonstorage_manager.initialize():
-        log.info("Syncing state from JsonStorage.net to local files...")
+    if state_server_manager.initialize():
+        log.info("Syncing state from State Server to local files...")
         
         # Sync bot state
-        cloud_state = jsonstorage_manager.load_data(jsonstorage_manager.state_id)
+        cloud_state = state_server_manager.load_data(state_server_manager.state_id)
         if cloud_state:
             try:
                 import json
