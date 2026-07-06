@@ -1,8 +1,29 @@
 {
-  "start_time": "2026-06-27 11:43:31 PM IST",
-  "posts_published": 24,
-  "posts_failed": 0,
+  "error_message": null,
   "n_posts_scheduled": 51,
+  "posts_failed": 0,
+  "posts_published": 30,
+  "recent_coins": [
+    "$BTC",
+    "$OP",
+    "$INJ",
+    "$XRP",
+    "$WIF",
+    "$BNB",
+    "$SOL",
+    "$INJ",
+    "$SOL",
+    "$WIF"
+  ],
+  "recent_posts": [],
+  "recent_types": [
+    "targets_and_signals",
+    "dark_humor_take",
+    "news_reaction",
+    "trending_coin_take",
+    "news_reaction",
+    "dark_humor_take"
+  ],
   "schedule": [
     {
       "coin": "$ADA",
@@ -180,60 +201,60 @@
       "type": "targets_and_signals"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$XRP",
+      "status": "Published",
       "time": "08:09 PM IST",
       "time_iso": "2026-07-06T20:09:48.227657",
-      "type": "Pending"
+      "type": "dark_humor_take"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$WIF",
+      "status": "Published",
       "time": "09:31 PM IST",
       "time_iso": "2026-07-06T21:31:34.227657",
-      "type": "Pending"
+      "type": "targets_and_signals"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$BNB",
+      "status": "Published",
       "time": "09:43 PM IST",
       "time_iso": "2026-07-06T21:43:19.227657",
-      "type": "Pending"
+      "type": "dark_humor_take"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$SOL",
+      "status": "Published",
       "time": "09:44 PM IST",
       "time_iso": "2026-07-06T21:44:37.227657",
-      "type": "Pending"
+      "type": "news_reaction"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$INJ",
+      "status": "Published",
       "time": "09:51 PM IST",
       "time_iso": "2026-07-06T21:51:33.227657",
-      "type": "Pending"
+      "type": "trending_coin_take"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$SOL",
+      "status": "Published",
       "time": "10:49 PM IST",
       "time_iso": "2026-07-06T22:49:38.227657",
-      "type": "Pending"
+      "type": "news_reaction"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$WIF",
+      "status": "Published",
       "time": "11:21 PM IST",
       "time_iso": "2026-07-06T23:21:42.227657",
-      "type": "Pending"
+      "type": "dark_humor_take"
     },
     {
-      "coin": "Pending",
-      "status": "Pending",
+      "coin": "$INJ",
+      "status": "Posting",
       "time": "11:22 PM IST",
       "time_iso": "2026-07-06T23:22:18.227657",
-      "type": "Pending"
+      "type": "trending_coin_take"
     },
     {
       "coin": "Pending",
@@ -362,27 +383,6 @@
       "type": "Pending"
     }
   ],
-  "recent_posts": [],
-  "recent_coins": [
-    "$ETH",
-    "$SOL",
-    "$XRP",
-    "$DOT",
-    "$NEAR",
-    "$TIA",
-    "$BTC",
-    "$OP",
-    "$INJ",
-    "$DOGE"
-  ],
-  "recent_types": [
-    "bearish_warning",
-    "dip_entry",
-    "news_reaction",
-    "entry_signal",
-    "community_hold",
-    "news_reaction"
-  ],
-  "error_message": null,
-  "status": "Posting post 23/51 to Binance..."
+  "start_time": "2026-06-27 11:43:31 PM IST",
+  "status": "Posting post 33/51 to Binance..."
 }

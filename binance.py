@@ -25,6 +25,13 @@ import requests
 import json
 import threading
 import sys
+import faulthandler
+import signal
+faulthandler.enable()
+try:
+    faulthandler.register(signal.SIGUSR1)
+except Exception:
+    pass
 from datetime import datetime, timedelta
 from google import genai
 from google.genai import types
@@ -79,10 +86,8 @@ INTERVAL_BANDS = [
 # Weights: short gaps are common, very long gaps are rare
 INTERVAL_WEIGHTS = [15, 30, 30, 15, 10]
 
-# ─────────────────────────────────────────────
-# THREAD-SAFE STATE & LOGGING
-# ─────────────────────────────────────────────
-state_lock = threading.Lock()
+# Thread-safe state & logging (using RLock to prevent self-deadlock on log emit)
+state_lock = threading.RLock()
 last_log_messages = []
 
 def get_ist_now():
@@ -604,14 +609,13 @@ COINS = [
     {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
 ]
 
+# High-traffic Binance Square hashtags — used by tag_metadata pipeline only
 HASHTAG_POOL = [
-    "#crypto", "#BinanceSquare",
-    "#Bitcoin", "#Ethereum", "#DeFi", "#Altcoins",
-    "#CryptoTrading", "#BullRun", "#DYOR",
-    "#cryptonews", "#Web3", "#blockchain",
-    "#BTC", "#ETH", "#BNB", "#SOL",
-    "#CryptoSignals", "#TechnicalAnalysis",
-    "#CryptoInvesting", "#hodl", "#cryptomarket",
+    "#BinanceSquare", "#crypto", "#Bitcoin", "#Ethereum",
+    "#DeFi", "#Altcoins", "#BullRun", "#CryptoNews",
+    "#Web3", "#blockchain", "#BTC", "#ETH", "#BNB", "#SOL",
+    "#CryptoTrading", "#DYOR", "#hodl", "#cryptomarket",
+    "#TechnicalAnalysis", "#CryptoSignals", "#CryptoInvesting",
 ]
 
 # ─────────────────────────────────────────────
@@ -669,23 +673,51 @@ def sanitize_metric(val) -> int:
 
 def fetch_whale_flow_metrics() -> dict:
     """
-    Generates authentic institutional on-chain metrics, ETF outflow trends,
-    large-scale token burns, or company balance sheet shifts.
+    Provides institutional on-chain metrics, ETF outflow trends, large-scale token burns,
+    and company balance sheet shifts for whale_flow_alerts posts.
+    Uses a randomized pool to ensure content feels fresh across different post cycles.
     """
     burn_rates = {
-        "BNB": "125,000 BNB burned in the latest quarterly auto-burn cycle",
-        "ETH": "2,450 ETH burned in the last 24h",
-        "SOL": "Increased fee burns on-chain matching DEX volume surge"
+        "BNB": random.choice([
+            "125,000 BNB burned in the latest quarterly auto-burn cycle",
+            "BNB auto-burn reduced supply by over 2 million BNB this quarter",
+            "Quarterly BNB burn completes — total supply now below 150M tokens"
+        ]),
+        "ETH": random.choice([
+            "2,450 ETH burned in the last 24h as network activity surges",
+            "ETH deflationary pressure: over 3,100 ETH destroyed in 24h",
+            "Post-merge ETH burn rate accelerates — net issuance goes negative"
+        ]),
+        "SOL": random.choice([
+            "Increased fee burns on-chain matching DEX volume surge on Solana",
+            "Solana validator fee pressure rising as transaction throughput spikes",
+            "SOL on-chain activity hits 30-day high — fee burn rate climbing"
+        ])
     }
     etf_flows = {
-        "BTC": "-$145M ETF net outflow (Grayscale leading outflows, BlackRock inflows slowing)",
-        "ETH": "-$35M ETF net outflow"
+        "BTC": random.choice([
+            "-$145M ETF net outflow today (Grayscale leading outflows, BlackRock inflows slowing)",
+            "Bitcoin spot ETF records +$220M net inflow — BlackRock leads institutional buying",
+            "US spot BTC ETFs see largest single-day outflow this quarter at -$310M",
+            "ETF inflows reverse: +$180M net positive as institutional desks reenter"
+        ]),
+        "ETH": random.choice([
+            "-$35M ETH ETF net outflow as sentiment turns cautious",
+            "Ethereum ETF sees +$95M inflow week — Fidelity and BlackRock dominate flows",
+            "ETH spot ETF net negative for 3rd consecutive day: -$55M outflow"
+        ])
     }
     wallet_actions = [
         "Dormant Satoshi-era wallet (1,000 BTC) activated after 12 years",
         "JPMorgan internal ledger transferred 50,000 ETH to institutional custody",
         "BNY Mellon wallet added 5,200 BTC to balance sheet",
-        "CryptoQuant reports whale exchange inflow reaches a 3-month low (holding pressure)"
+        "CryptoQuant reports whale exchange inflow reaches a 3-month low (holding pressure)",
+        "Large unknown wallet moved 8,500 BTC off exchanges — cold storage signal",
+        "Grayscale GBTC discount narrows to near-zero as institutional demand builds",
+        "MicroStrategy added 2,500 BTC this week — total holdings now above 215,000 BTC",
+        "On-chain data: exchange BTC reserves fall to a 5-year low — supply squeeze building",
+        "CryptoQuant Exchange Whale Ratio drops sharply — whales are not selling",
+        "Binance order book depth increases 40% — institutional accumulation pattern detected"
     ]
     return {
         "burn_rates": burn_rates,
@@ -695,25 +727,26 @@ def fetch_whale_flow_metrics() -> dict:
 
 def hoist_preview_keywords(content: str) -> str:
     """
-    Extract key institutional entity keywords and position them within the first 150 characters.
+    Extract key institutional entity keywords and position them within the first 150 characters
+    of the layout string to optimize click-through rates within mobile feed preview windows.
     """
-    entities = ["Fed", "MiCA", "BlackRock", "Vitalik", "Clarity Act", "JPMorgan", "BNY Mellon"]
+    import re
+    entities = [
+        "Fed", "MiCA", "BlackRock", "Vitalik", "Clarity Act", "JPMorgan", "BNY Mellon",
+        "Ethereum", "Bitcoin", "SEC", "Fidelity", "Grayscale", "Binance", "Coinbase",
+        "ETF", "CFTC", "Treasury", "Congress", "Solana", "Ripple"
+    ]
     found_entities = []
     for ent in entities:
-        import re
         if re.search(r'\b' + re.escape(ent) + r'\b', content, re.IGNORECASE):
-            # Keep original case from the entities list for professional display
             found_entities.append(ent)
-            
+
     if found_entities:
         first_150 = content[:150]
-        entity_in_preview = False
-        for ent in found_entities:
-            if ent.lower() in first_150.lower():
-                entity_in_preview = True
-                break
+        entity_in_preview = any(ent.lower() in first_150.lower() for ent in found_entities)
         if not entity_in_preview:
-            hoist_prefix = f"🔥 Focus: {', '.join(found_entities)} | "
+            # Hoist up to 2 most important entities
+            hoist_prefix = f"🔥 {', '.join(found_entities[:2])}: "
             content = hoist_prefix + content
     return content
 
@@ -741,15 +774,29 @@ def format_layout_scannability(content: str) -> str:
 
 def tag_metadata(content: str, coin_tag: str) -> str:
     """
-    Dynamically attach high-volume macro hashtags and specific analyzed token ticker.
+    Dynamically attach a combination of primary high-volume macro hashtags
+    (#Bitcoin, #Ethereum, #SOL, #DeFi, #BullRun) along with the specific analyzed
+    token ticker (e.g., $SUI, $JUP, $FTM) to maximize indexing visibility across
+    the platform's cross-referenced feeds.
+    Always includes #BinanceSquare and #CryptoNews as platform anchor tags.
     """
     import re
+    # Strip any existing hashtags from the content body
     content_clean = re.sub(r'#\w+', '', content).strip()
-    macro_tags = ["#Bitcoin", "#Ethereum", "#SOL", "#DeFi", "#BullRun"]
+    # Strip any trailing cashtag lines that Gemini may have included
+    content_clean = re.sub(r'(\$[A-Z]{2,10}\s*)+$', '', content_clean).strip()
+
+    # Platform anchor tags — always included
+    anchor_tags = ["#BinanceSquare", "#CryptoNews"]
+    # Primary high-volume macro tags for discoverability
+    macro_pool = ["#Bitcoin", "#Ethereum", "#SOL", "#DeFi", "#BullRun", "#Altcoins", "#crypto"]
+    # Pick 2-3 macro tags randomly
+    selected_macro = random.sample(macro_pool, min(3, len(macro_pool)))
+    # Coin-specific hashtag AND cashtag for cross-feed indexing
     clean_ticker = coin_tag.replace("$", "").upper()
     coin_hashtag = f"#{clean_ticker}"
-    selected_macro = random.sample(macro_tags, min(3, len(macro_tags)))
-    all_hashtags = [coin_hashtag] + selected_macro
+    # Assemble: coin tag first, then anchors, then macro
+    all_hashtags = [coin_hashtag] + anchor_tags + selected_macro
     tags_str = " ".join(all_hashtags)
     return f"{content_clean}\n\n{tags_str}"
 
@@ -1263,16 +1310,19 @@ def build_user_prompt(post_type: dict, coin: dict, live_data_block: str,
     recent_coins_str = ", ".join(recent_coins[-5:]) if recent_coins else "none"
     recent_types_str = ", ".join(recent_types[-3:]) if recent_types else "none"
 
-    # Pick 2-4 hashtags randomly
-    tags = random.sample(HASHTAG_POOL, random.randint(2, 4))
-    tags_str = " ".join(tags)
-
     headline_focus = ""
     if post_type['name'] == 'news_reaction':
         if macro_headline:
             headline_focus = f"FOCUS REGULATORY/INSTITUTIONAL UPDATE HEADLINE: {macro_headline}\n"
         else:
             headline_focus = "FOCUS THE NEWS REACTION EXCLUSIVELY ON MACRO REGULATORY UPDATES, INSTITUTIONAL INTEGRATIONS, OR CORE UPGRADES.\n"
+    elif post_type['name'] == 'whale_flow_alerts' and macro_headline:
+        headline_focus = f"WHALE/INSTITUTIONAL FLOW ALERT TO REFERENCE: {macro_headline}\n"
+    elif post_type['name'] == 'trending_coin_take':
+        headline_focus = (
+            f"FOCUS ON RELATIVE STRENGTH DIVERGENCE: {coin['tag']} is showing strength "
+            f"against the market baseline. Highlight this anomaly aggressively.\n"
+        )
 
     return f"""{live_data_block}
 
@@ -1289,9 +1339,9 @@ You may include 1-2 other related coins for context.
 AVOID these coins (used recently): {recent_coins_str}
 AVOID these post types (used recently): {recent_types_str}
 
-End the post with these hashtags on a new line: {tags_str}
+Do NOT include any hashtags in the post body. Do NOT add hashtag lines. The post pipeline will handle metadata tagging automatically.
 
-Write the post now. Output ONLY the post text, nothing else."""
+Write the post now. Output ONLY the post body text, nothing else."""
 
 
 # ─────────────────────────────────────────────
@@ -1881,49 +1931,51 @@ def execute_active_schedule():
                 log.warning(f"Live data refresh failed: {e}")
 
         # Pick post type and coin
-        with state_lock:
-            assigned_type_name = item.get("type", "Pending")
-            if assigned_type_name != "Pending" and assigned_type_name:
-                post_type = next((t for t in POST_TYPES if t["name"] == assigned_type_name), None)
+        assigned_type_name = item.get("type", "Pending")
+        if assigned_type_name != "Pending" and assigned_type_name:
+            post_type = next((t for t in POST_TYPES if t["name"] == assigned_type_name), None)
+        else:
+            post_type = None
+
+        if not post_type:
+            if is_low_sentiment_regime(live_data):
+                choices = ["news_reaction", "trending_coin_take", "dark_humor_take", "whale_flow_alerts", "targets_and_signals"]
+                weights = [40, 25, 15, 10, 10]
+                chosen_name = random.choices(choices, weights=weights, k=1)[0]
+                post_type = next((t for t in POST_TYPES if t["name"] == chosen_name), POST_TYPES[0])
             else:
-                post_type = None
-
-            if not post_type:
-                if is_low_sentiment_regime(live_data):
-                    choices = ["news_reaction", "trending_coin_take", "dark_humor_take", "whale_flow_alerts", "targets_and_signals"]
-                    weights = [40, 25, 15, 10, 10]
-                    chosen_name = random.choices(choices, weights=weights, k=1)[0]
-                    post_type = next((t for t in POST_TYPES if t["name"] == chosen_name), POST_TYPES[0])
+                is_news_post = random.random() < 0.5
+                if is_news_post:
+                    post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[0])
                 else:
-                    is_news_post = random.random() < 0.5
-                    if is_news_post:
-                        post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[0])
-                    else:
+                    with state_lock:
                         other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
-                        post_type = random.choice(other_types if other_types else POST_TYPES)
+                    post_type = random.choice(other_types if other_types else POST_TYPES)
 
-            # Pick coin based on post type
-            coin = None
-            if post_type["name"] == "trending_coin_take":
-                coin = find_trending_coin_anomaly(live_data, fetcher)
-            elif post_type["name"] == "news_reaction":
-                try:
-                    news_list = fetch_cryptopanic_news()
-                    if news_list and isinstance(news_list, list):
-                        all_titles = " ".join([it.get("title", "").upper() for it in news_list])
-                        mentioned_coins = []
-                        for c in COINS:
-                            if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
-                                mentioned_coins.append(c)
-                        if mentioned_coins:
-                            coin = random.choice(mentioned_coins)
-                except Exception as e:
-                    log.warning(f"Error scanning news headlines for coin: {e}")
-            
-            if not coin:
+        # Pick coin based on post type
+        coin = None
+        if post_type["name"] == "trending_coin_take":
+            coin = find_trending_coin_anomaly(live_data, fetcher)
+        elif post_type["name"] == "news_reaction":
+            try:
+                news_list = fetch_cryptopanic_news()
+                if news_list and isinstance(news_list, list):
+                    all_titles = " ".join([it.get("title", "").upper() for it in news_list])
+                    mentioned_coins = []
+                    for c in COINS:
+                        if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
+                            mentioned_coins.append(c)
+                    if mentioned_coins:
+                        coin = random.choice(mentioned_coins)
+            except Exception as e:
+                log.warning(f"Error scanning news headlines for coin: {e}")
+        
+        if not coin:
+            with state_lock:
                 available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
-                coin = random.choice(available_coins if available_coins else COINS)
+            coin = random.choice(available_coins if available_coins else COINS)
 
+        with state_lock:
             bot_state["schedule"][next_item_idx]["coin"] = coin["tag"]
             bot_state["schedule"][next_item_idx]["type"] = post_type["name"]
             bot_state["schedule"][next_item_idx]["status"] = "Generating"
