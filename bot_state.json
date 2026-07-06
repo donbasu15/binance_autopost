@@ -1,101 +1,388 @@
 {
-  "error_message": null,
-  "n_posts_scheduled": 0,
+  "start_time": "2026-06-27 11:43:31 PM IST",
+  "posts_published": 24,
   "posts_failed": 0,
-  "posts_published": 0,
-  "recent_coins": [
-    "$PEPE",
-    "$TIA",
-    "$DOGE",
-    "$SOL",
-    "$TIA",
-    "$ARB",
-    "$SUI",
-    "$TIA",
-    "$XRP",
-    "$LINK"
-  ],
-  "recent_posts": [
+  "n_posts_scheduled": 51,
+  "schedule": [
     {
-      "content": "Institutions won't touch public blockchains because they can't risk the information leakage. Visible positions and front-running are massive dealbreakers for big money.\n\nPrivacy isn't a luxury. It's the foundation.\n\nWhile the market bleeds and retail chases memes, the real institutional play is building secure, private infrastructure. $LINK stays central to this shift. \u26d3\ufe0f\n\n#DeFi #BTC #Altcoins #ETH ",
-      "status": "Success",
-      "time": "07:31:08 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/339001623983714"
+      "coin": "$ADA",
+      "status": "Published",
+      "time": "11:54 AM IST",
+      "time_iso": "2026-07-06T11:54:11.227657",
+      "type": "dip_entry"
     },
     {
-      "content": "The CLARITY Act could unlock $56 trillion for $XRP. Most traders can't even wrap their heads around a number that big.\n\nPrice is sitting at $1.05 and looking a bit heavy below the EMA20, but don't get lost in the local chop. Regulatory clarity is the ultimate catalyst. The institutional floodgates are just waiting for the green light. \ud83d\ude80\n\n#ETH #CryptoTrading #BNB ",
-      "status": "Success",
-      "time": "07:29:22 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/339001191195218"
+      "coin": "$LINK",
+      "status": "Published",
+      "time": "12:02 PM IST",
+      "time_iso": "2026-07-06T12:02:44.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "Ripple CEO claiming Saylor\u2019s Bitcoin strategy hurt the market is pure chaos. \nThe debate between long-term accumulation and market volatility isn't going away anytime soon.\nRegardless of the noise, $BTC isn't going anywhere.\nReal builders are just watching the liquidations. \ud83d\ude80\n\n#Bitcoin #CryptoNews #MarketSentiment ",
-      "status": "Success",
-      "time": "07:22:48 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/338999575654834"
+      "coin": "$LINK",
+      "status": "Published",
+      "time": "12:13 PM IST",
+      "time_iso": "2026-07-06T12:13:43.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "$SUI sitting at $0.6873 with the market in pure extreme fear mode. \n\nFunny how everyone talks about \"the next big thing\" until the price is stuck under the $0.69 EMA. The funding rate is even negative. We are literally watching people pay to get out of their positions \ud83d\udc80\n\nIf $0.65 support cracks, don't come crying to me.\n\n#Bitcoin #blockchain #BullRun ",
-      "status": "Success",
-      "time": "07:22:22 PM IST",
-      "type": "dark_humor_take",
-      "url": "https://www.binance.com/square/post/338999467921074"
+      "coin": "$SOL",
+      "status": "Published",
+      "time": "12:22 PM IST",
+      "time_iso": "2026-07-06T12:22:52.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "Fear & Greed index is sitting at 18 \u2014 Extreme Fear.\nThe market is bleeding and everyone is looking for the exit.\n$ARB is drifting sideways around $0.073900 while the trend stays bearish. \nHistorically, this level of fear is where the real bottom is built and smart money accumulates.\nExtreme fear usually precedes a bounce once the liquidations are out of the way. \nKeep an eye on $ETH support. \ud83d\udcc9\n\n#Ethereum #cryptomarket ",
-      "status": "Success",
-      "time": "07:20:18 PM IST",
-      "type": "fear_greed_take",
-      "url": "https://www.binance.com/square/post/338998962123570"
+      "coin": "$BTC",
+      "status": "Published",
+      "time": "12:27 PM IST",
+      "time_iso": "2026-07-06T12:27:11.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "Ripple CEO claims Michael Saylor's Bitcoin strategy has actually hurt the broader crypto market.\nThat's a wild take.\nThe massive $BTC accumulation by MicroStrategy is literally what provides the liquidity and foundation for the whole space.\nTrying to blame the biggest success story in the industry for market volatility is just noise.\nPeople need to separate institutional adoption from short-term price action. \n\n#Ethereum #BNB #Web3 ",
-      "status": "Success",
-      "time": "07:15:00 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/338997659932817"
+      "coin": "$BTC",
+      "status": "Published",
+      "time": "01:31 PM IST",
+      "time_iso": "2026-07-06T13:31:12.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "The talk about $SOL hitting $500 feels wild while the market is stuck in extreme fear.\nBut this shakeout is exactly what's needed.\nPrice is $71.75 and still holding above the EMA20 and EMA50.\nAs long as we stay above $64, the bullish structure holds.\nLet the weak hands get washed. \ud83d\udcc9\n\n#SOL #CryptoInvesting #TechnicalAnalysis ",
-      "status": "Success",
-      "time": "07:12:46 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/338997109564354"
+      "coin": "$ETH",
+      "status": "Published",
+      "time": "02:11 PM IST",
+      "time_iso": "2026-07-06T14:11:16.227657",
+      "type": "news_reaction"
     },
     {
-      "content": "Ripple's CEO claims Michael Saylor\u2019s $BTC strategy hurt the market. Bold claim. \n\nMost people just see the massive treasury growth and call it a win, but this debate on market dynamics is heating up. While $DOGE sits around $0.073670 dealing with some bearish momentum, the macro debate is clearly shifting toward how much institutional accumulation actually impacts volatility. \n\nExtreme fear is the current vibe, but these boardroom arguments usually precede a big move. \ud83d\udcc9\n\n#Bitcoin #Altcoins #Web3 #hodl ",
-      "status": "Success",
-      "time": "07:06:17 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/338995518653890"
+      "coin": "$TIA",
+      "status": "Published",
+      "time": "02:16 PM IST",
+      "time_iso": "2026-07-06T14:16:05.227657",
+      "type": "price_target"
     },
     {
-      "content": "Ripple CEO claims Michael Saylor's Bitcoin strategy has actually hurt the market. \nBold claim for sure. \nMost see $BTC adoption as the ultimate fuel, but some think the massive concentration in one strategy creates a single point of failure for the whole ecosystem. \nWhile the big players argue, $TIA is quietly holding above its EMAs at $0.3742. \nThe market is in extreme fear right now, which usually means the real moves are being built in silence. \ud83e\udea8\n\n#Altcoins #DeFi ",
-      "status": "Success",
-      "time": "06:58:31 PM IST",
-      "type": "news_reaction",
-      "url": "https://www.binance.com/square/post/338993608210961"
+      "coin": "$NEAR",
+      "status": "Published",
+      "time": "02:17 PM IST",
+      "time_iso": "2026-07-06T14:17:59.227657",
+      "type": "dark_humor_take"
     },
     {
-      "content": "Market is drowning in extreme fear right now. \nThis is exactly when the weak hands exit. \n$PEPE is holding at $0.000002 with $7.1M in volume. \nIgnore the panic and the $DOGE shakeouts. \nConviction is everything. \ud83d\udc38\n\n#BullRun #Bitcoin #hodl ",
-      "status": "Success",
-      "time": "06:57:48 PM IST",
-      "type": "community_hold",
-      "url": "https://www.binance.com/square/post/338993434242370"
+      "coin": "$ETH",
+      "status": "Published",
+      "time": "02:19 PM IST",
+      "time_iso": "2026-07-06T14:19:16.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$WIF",
+      "status": "Published",
+      "time": "02:19 PM IST",
+      "time_iso": "2026-07-06T14:19:33.227657",
+      "type": "entry_signal"
+    },
+    {
+      "coin": "$OP",
+      "status": "Published",
+      "time": "03:26 PM IST",
+      "time_iso": "2026-07-06T15:26:49.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$FTM",
+      "status": "Published",
+      "time": "03:54 PM IST",
+      "time_iso": "2026-07-06T15:54:12.227657",
+      "type": "community_hold"
+    },
+    {
+      "coin": "$ADA",
+      "status": "Published",
+      "time": "04:01 PM IST",
+      "time_iso": "2026-07-06T16:01:49.227657",
+      "type": "entry_signal"
+    },
+    {
+      "coin": "$ETH",
+      "status": "Published",
+      "time": "04:06 PM IST",
+      "time_iso": "2026-07-06T16:06:16.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$SOL",
+      "status": "Published",
+      "time": "04:36 PM IST",
+      "time_iso": "2026-07-06T16:36:44.227657",
+      "type": "trending_coin_take"
+    },
+    {
+      "coin": "$XRP",
+      "status": "Published",
+      "time": "04:56 PM IST",
+      "time_iso": "2026-07-06T16:56:00.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$DOT",
+      "status": "Published",
+      "time": "05:18 PM IST",
+      "time_iso": "2026-07-06T17:18:10.227657",
+      "type": "price_target"
+    },
+    {
+      "coin": "$NEAR",
+      "status": "Published",
+      "time": "05:45 PM IST",
+      "time_iso": "2026-07-06T17:45:03.227657",
+      "type": "bearish_warning"
+    },
+    {
+      "coin": "$TIA",
+      "status": "Published",
+      "time": "05:57 PM IST",
+      "time_iso": "2026-07-06T17:57:57.227657",
+      "type": "dip_entry"
+    },
+    {
+      "coin": "$BTC",
+      "status": "Published",
+      "time": "06:12 PM IST",
+      "time_iso": "2026-07-06T18:12:22.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$OP",
+      "status": "Published",
+      "time": "06:19 PM IST",
+      "time_iso": "2026-07-06T18:19:25.227657",
+      "type": "entry_signal"
+    },
+    {
+      "coin": "$INJ",
+      "status": "Published",
+      "time": "06:47 PM IST",
+      "time_iso": "2026-07-06T18:47:28.227657",
+      "type": "community_hold"
+    },
+    {
+      "coin": "$SUI",
+      "status": "Generating",
+      "time": "07:09 PM IST",
+      "time_iso": "2026-07-06T19:09:56.227657",
+      "type": "news_reaction"
+    },
+    {
+      "coin": "$BNB",
+      "status": "Generating",
+      "time": "07:14 PM IST",
+      "time_iso": "2026-07-06T19:14:23.227657",
+      "type": "targets_and_signals"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "08:09 PM IST",
+      "time_iso": "2026-07-06T20:09:48.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "09:31 PM IST",
+      "time_iso": "2026-07-06T21:31:34.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "09:43 PM IST",
+      "time_iso": "2026-07-06T21:43:19.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "09:44 PM IST",
+      "time_iso": "2026-07-06T21:44:37.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "09:51 PM IST",
+      "time_iso": "2026-07-06T21:51:33.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "10:49 PM IST",
+      "time_iso": "2026-07-06T22:49:38.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "11:21 PM IST",
+      "time_iso": "2026-07-06T23:21:42.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "11:22 PM IST",
+      "time_iso": "2026-07-06T23:22:18.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "11:31 PM IST",
+      "time_iso": "2026-07-06T23:31:36.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "11:52 PM IST",
+      "time_iso": "2026-07-06T23:52:23.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "12:56 AM IST",
+      "time_iso": "2026-07-07T00:56:46.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "01:36 AM IST",
+      "time_iso": "2026-07-07T01:36:41.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "01:46 AM IST",
+      "time_iso": "2026-07-07T01:46:29.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "01:57 AM IST",
+      "time_iso": "2026-07-07T01:57:47.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "02:21 AM IST",
+      "time_iso": "2026-07-07T02:21:54.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "02:30 AM IST",
+      "time_iso": "2026-07-07T02:30:25.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "02:42 AM IST",
+      "time_iso": "2026-07-07T02:42:08.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "02:47 AM IST",
+      "time_iso": "2026-07-07T02:47:26.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "02:57 AM IST",
+      "time_iso": "2026-07-07T02:57:32.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "03:38 AM IST",
+      "time_iso": "2026-07-07T03:38:15.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "04:40 AM IST",
+      "time_iso": "2026-07-07T04:40:38.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "05:07 AM IST",
+      "time_iso": "2026-07-07T05:07:30.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "06:00 AM IST",
+      "time_iso": "2026-07-07T06:00:15.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "06:00 AM IST",
+      "time_iso": "2026-07-07T06:00:30.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "06:01 AM IST",
+      "time_iso": "2026-07-07T06:01:06.227657",
+      "type": "Pending"
+    },
+    {
+      "coin": "Pending",
+      "status": "Pending",
+      "time": "07:08 AM IST",
+      "time_iso": "2026-07-07T07:08:41.227657",
+      "type": "Pending"
     }
   ],
+  "recent_posts": [],
+  "recent_coins": [
+    "$ETH",
+    "$SOL",
+    "$XRP",
+    "$DOT",
+    "$NEAR",
+    "$TIA",
+    "$BTC",
+    "$OP",
+    "$INJ",
+    "$DOGE"
+  ],
   "recent_types": [
+    "bearish_warning",
+    "dip_entry",
     "news_reaction",
-    "fear_greed_take",
-    "dark_humor_take",
-    "news_reaction",
-    "news_reaction",
+    "entry_signal",
+    "community_hold",
     "news_reaction"
   ],
-  "schedule": [],
-  "start_time": "2026-06-27 11:43:31 PM IST",
-  "status": "Reset: Waiting for next cycle"
+  "error_message": null,
+  "status": "Posting post 23/51 to Binance..."
 }
