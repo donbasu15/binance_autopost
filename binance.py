@@ -774,11 +774,10 @@ def format_layout_scannability(content: str) -> str:
 
 def tag_metadata(content: str, coin_tag: str) -> str:
     """
-    Dynamically attach a combination of primary high-volume macro hashtags
-    (#Bitcoin, #Ethereum, #SOL, #DeFi, #BullRun) along with the specific analyzed
-    token ticker (e.g., $SUI, $JUP, $FTM) to maximize indexing visibility across
-    the platform's cross-referenced feeds.
-    Always includes #BinanceSquare and #CryptoNews as platform anchor tags.
+    Dynamically attach a combination of primary high-volume macro hashtags along
+    with the specific analyzed token ticker to maximize indexing visibility.
+    Hard cap: 4 hashtags total (Binance Square recommended maximum to avoid spam filters).
+    Formula: 1 coin tag + 1 anchor (#BinanceSquare) + 2 random macro tags = 4.
     """
     import re
     # Strip any existing hashtags from the content body
@@ -786,19 +785,22 @@ def tag_metadata(content: str, coin_tag: str) -> str:
     # Strip any trailing cashtag lines that Gemini may have included
     content_clean = re.sub(r'(\$[A-Z]{2,10}\s*)+$', '', content_clean).strip()
 
-    # Platform anchor tags — always included
-    anchor_tags = ["#BinanceSquare", "#CryptoNews"]
-    # Primary high-volume macro tags for discoverability
-    macro_pool = ["#Bitcoin", "#Ethereum", "#SOL", "#DeFi", "#BullRun", "#Altcoins", "#crypto"]
-    # Pick 2-3 macro tags randomly
-    selected_macro = random.sample(macro_pool, min(3, len(macro_pool)))
-    # Coin-specific hashtag AND cashtag for cross-feed indexing
+    # Fixed platform anchor — always position 1 for discoverability
+    anchor_tag = "#BinanceSquare"
+    # Macro pool — pick exactly 3 to fill slots 3-5
+    macro_pool = [
+        "#Bitcoin", "#Ethereum", "#SOL", "#DeFi", "#BullRun",
+        "#Altcoins", "#crypto", "#CryptoNews", "#CryptoTrading"
+    ]
+    selected_macro = random.sample(macro_pool, 3)
+    # Coin-specific hashtag is always slot 2
     clean_ticker = coin_tag.replace("$", "").upper()
     coin_hashtag = f"#{clean_ticker}"
-    # Assemble: coin tag first, then anchors, then macro
-    all_hashtags = [coin_hashtag] + anchor_tags + selected_macro
+    # Final list: exactly 5 hashtags
+    all_hashtags = [anchor_tag, coin_hashtag] + selected_macro
     tags_str = " ".join(all_hashtags)
     return f"{content_clean}\n\n{tags_str}"
+
 
 def process_post_layout(content: str, coin_tag: str) -> str:
     """
