@@ -798,7 +798,7 @@ def tag_metadata(content: str, coin_tag: str) -> str:
     coin_hashtag = f"#{clean_ticker}"
     # Final list: exactly 5 hashtags
     all_hashtags = [anchor_tag, coin_hashtag] + selected_macro
-    tags_str = " ".join(all_hashtags)
+    tags_str = " ".join(all_hashtags) + " "
     return f"{content_clean}\n\n{tags_str}"
 
 
