@@ -70,8 +70,8 @@ BINANCE_POST_ENDPOINT = BINANCE_POST_URL
 
 DATA_REFRESH_EVERY = 2
 
-POSTS_PER_DAY_MIN = 40
-POSTS_PER_DAY_MAX = 60
+POSTS_PER_DAY_MIN = 60
+POSTS_PER_DAY_MAX = 70
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
@@ -1818,18 +1818,47 @@ def run_daily_session():
         log.warning("No remaining time in today's active window. Skipping scheduling.")
         return
 
-    # Calculate proportion of posts to schedule
-    total_window_duration = (cycle_end - get_cycle_start(now_ist)).total_seconds() # 8 hours (28800 seconds)
-    proportion = max(0.1, min(1.0, remaining_seconds / total_window_duration))
-    
+    cycle_start = get_cycle_start(now_ist)
     base_n = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
-    n_posts = max(1, int(base_n * proportion))
     
-    # Generate schedule times within the remaining window
-    timestamps_ist = sorted([
-        now_ist + timedelta(seconds=random.randint(0, int(remaining_seconds)))
-        for _ in range(n_posts)
-    ])
+    # We want 30% of posts to occur between 6 AM and 8 AM
+    special_start = cycle_end.replace(hour=6, minute=0, second=0, microsecond=0)
+    special_end = cycle_end.replace(hour=8, minute=0, second=0, microsecond=0)
+    
+    num_special = int(base_n * 0.30)
+    num_normal = base_n - num_special
+    
+    full_schedule = []
+    
+    # 6 AM to 8 AM posts
+    for _ in range(num_special):
+        random_sec = random.randint(0, int((special_end - special_start).total_seconds()))
+        full_schedule.append(special_start + timedelta(seconds=random_sec))
+        
+    # Rest of the active window posts
+    chunk1_start = cycle_start
+    chunk1_end = special_start
+    chunk2_start = special_end
+    chunk2_end = cycle_end
+    
+    chunk1_dur = (chunk1_end - chunk1_start).total_seconds()
+    chunk2_dur = (chunk2_end - chunk2_start).total_seconds()
+    total_normal_dur = chunk1_dur + chunk2_dur
+    
+    for _ in range(num_normal):
+        r = random.uniform(0, total_normal_dur)
+        if r < chunk1_dur:
+            full_schedule.append(chunk1_start + timedelta(seconds=r))
+        else:
+            full_schedule.append(chunk2_start + timedelta(seconds=r - chunk1_dur))
+            
+    # Keep only the timestamps that are in the future
+    timestamps_ist = sorted([ts for ts in full_schedule if ts > now_ist])
+    n_posts = len(timestamps_ist)
+    
+    if n_posts == 0:
+        log.warning("No posts fell into the remaining time. Skipping scheduling.")
+        return
     
     log.info(f"📅 Daily session: {n_posts} posts scheduled across remaining active window")
     log.info(f"   First post: {timestamps_ist[0].strftime('%I:%M %p IST')}")
@@ -1854,22 +1883,22 @@ def run_daily_session():
     execute_active_schedule()
 
 def get_cycle_start(dt_ist):
-    # If the time is before 7:30 AM, the cycle started yesterday at 11:30 AM
-    limit_time = dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+    # If the time is before 10:00 AM, the cycle started yesterday at 2:00 PM
+    limit_time = dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
     if dt_ist < limit_time:
         yesterday = dt_ist - timedelta(days=1)
-        return yesterday.replace(hour=11, minute=30, second=0, microsecond=0)
+        return yesterday.replace(hour=14, minute=0, second=0, microsecond=0)
     else:
-        return dt_ist.replace(hour=11, minute=30, second=0, microsecond=0)
+        return dt_ist.replace(hour=14, minute=0, second=0, microsecond=0)
 
 def get_cycle_end(dt_ist):
-    # If the time is before 7:30 AM, the cycle ends today at 7:30 AM
-    limit_time = dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+    # If the time is before 10:00 AM, the cycle ends today at 10:00 AM
+    limit_time = dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
     if dt_ist < limit_time:
-        return dt_ist.replace(hour=7, minute=30, second=0, microsecond=0)
+        return dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
     else:
         tomorrow = dt_ist + timedelta(days=1)
-        return tomorrow.replace(hour=7, minute=30, second=0, microsecond=0)
+        return tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
 
 
 def execute_active_schedule():
@@ -3201,23 +3230,23 @@ def background_worker():
 
             if now_ist < cycle_start:
                 wait_seconds = (cycle_start - now_ist).total_seconds()
-                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 2:00 PM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset previous stats if not already reset
                 if bot_state["posts_published"] > 0 or bot_state["posts_failed"] > 0 or bot_state["schedule"]:
                     reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until cycle start (11:30 AM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until cycle start (2:00 PM IST)")
                 
             elif now_ist >= cycle_end:
                 tomorrow_start = get_cycle_start(now_ist + timedelta(days=1))
                 wait_seconds = (tomorrow_start - now_ist).total_seconds()
-                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 2:00 PM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset cycle
                 reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (11:30 AM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (2:00 PM IST)")
                 
             else:
                 # We are inside the active window! Run/Resume daily session
