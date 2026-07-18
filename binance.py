@@ -424,45 +424,59 @@ Write a SHORT narrative post (Template A). Structure:
 - Lines 2-4: 2-3 lines of analysis referencing real price action, candle structure, or momentum from the data
 - Line 5: Your personal stance ("I'm taking the long" / "I'm staying bearish" / "I'm watching for...")
 - Line 6: Optional casual closing question or comment (😉 optional)
-- NO entry/SL/TP numbers in this template
-- Max 200 words
+
+FORMATTING RULES:
+- NO entry/SL/TP numbers in this template.
+- Max 200 words.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
 """,
 
 "long_signal": """
 Write a LONG SIGNAL post (Template B). Structure:
 - Line 1: 🚀 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
 - Blank line
-- Entry: [price derived from live data — use current price ±1-2%]
+- "Entry: [price derived from live data — use current price ±1-2%]"
 - Blank line
-- SL: [price — 4-6% below entry]
+- "SL: [price — 4-6% below entry]"
 - Blank line
-- TP1: [+3-5% from entry]
-- TP2: [+7-10% from entry]
-- TP3: [+15-20% from entry]
+- "TP1: [+3-5% from entry]"
+- "TP2: [+7-10% from entry]"
+- "TP3: [+15-20% from entry]"
 - Blank line
 - [1-2 lines: RSI reading, MACD direction, trend — use ACTUAL computed values from data]
 - Blank line
-- ‼️ Risk Management is Important.
+- "‼️ Risk Management is Important."
 - Blank line
-- Trade Here 👇🏻
+- "Trade Here 👇🏻"
+
+FORMATTING RULES:
+- Each key component (Entry, SL, TP, ‼️, Trade Here) MUST start on a new line.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
 """,
 
 "short_signal": """
 Write a SHORT SIGNAL post (Template C). Structure:
 - Line 1: 🩸 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
 - Blank line
-- Entry: [price — at or slightly above current price]
-- SL: [price — 3-5% above entry]
+- "Entry: [price — at or slightly above current price]"
+- "SL: [price — 3-5% above entry]"
 - Blank line
-- TP1: [price — 3-5% below entry]
-- TP2: [price — 7-10% below entry]
-- TP3: [price — 12-18% below entry]
+- "TP1: [price — 3-5% below entry]"
+- "TP2: [price — 7-10% below entry]"
+- "TP3: [price — 12-18% below entry]"
 - Blank line
 - [1-2 lines: overbought RSI, rejection, exhaustion — use ACTUAL computed values]
 - Blank line
-- ‼️ Risk Management is Important.
+- "‼️ Risk Management is Important."
 - Blank line
-- Trade Here 👇🏻
+- "Trade Here 👇🏻"
+
+FORMATTING RULES:
+- Each key component (Entry, SL, TP, ‼️, Trade Here) MUST start on a new line.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
 """,
 
 "thuchoang_style": """
@@ -481,21 +495,33 @@ Write a post in thuchoang90's style (Template D). Structure:
 - Blank line
 - "Be careful: [one specific risk scenario with a price level]"
 - "Never all-in, fam. Use a size that fits your own account."
+- Blank line
+- "Trade Here 👇🏻"
+
+FORMATTING RULES:
+- Each key component (Entry, TP, SL, Be careful, Never all-in, Trade Here) MUST start on a new line.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
 """,
 
 "scenario_analysis": """
 Write a SCENARIO ANALYSIS post (Template E). Structure:
 - Line 1: ‼️$COIN is [situation description at current price]
 - Blank line
-- 🟢 Bullish Scenario:
+- "🟢 Bullish Scenario:"
 - [2 lines of bullish case — what needs to hold, where it goes]
 - Blank line
-- 🔴 Bearish Scenario:
+- "🔴 Bearish Scenario:"
 - [2 lines of bearish case — what fails, where it goes]
 - Blank line
 - [1 line personal stance — "I'm waiting for confirmation rather than chasing"]
 - Blank line
-- Trade Here 👇🏻
+- "Trade Here 👇🏻"
+
+FORMATTING RULES:
+- Each key component (🟢, 🔴, Trade Here) MUST start on a new line.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
 """,
 }
 
@@ -800,6 +826,77 @@ def tag_metadata(content: str, coin_tag: str) -> str:
     # Strip any existing hashtags from the content body
     content_clean = re.sub(r'#\w+', '', content).strip()
     return content_clean
+
+
+def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dict]]:
+    import re
+
+    # ── 1. Strip hashtags ──
+    content = re.sub(r'#\w+', '', content)
+
+    # ── 2. Remove any {future}/{spot} Gemini wrote (we add them ourselves) ──
+    content = re.sub(r'\{future\}\s*\(?\w*\)?', '', content)
+    content = re.sub(r'\{spot\}\s*\(?\w*\)?', '', content)
+
+    # ── 3. Force line breaks before key signal keywords ──
+    # These should ALWAYS start on their own line
+    force_newline_before = [
+        r'(Entry\s*:)',
+        r'(Be careful\s*:)',
+        r'(Never all-in)',
+        r'(Target\s)',
+        r'(SL\s:)',
+        r'(TP1\s:)',
+        r'(TP2\s:)',
+        r'(TP3\s:)',
+        r'(TP4\s:)',
+        r'(RSI\s:)',
+        r'(EMA\s:)',
+        r'(🟢\s*Bull)',
+        r'(🔴\s*Bear)',
+        r'(‼️\s*Risk)'
+    ]
+    for pattern in force_newline_before:
+        content = re.sub(r'[ \t]*' + pattern, r'\n\n\1', content)
+
+    # ── 4. Strip trailing spaces from every line ──
+    lines = [line.rstrip() for line in content.splitlines()]
+
+    # ── 5. Collapse 3+ blank lines into 1 blank line ──
+    cleaned = []
+    blank_streak = 0
+    for line in lines:
+        if line == '':
+            blank_streak += 1
+            if blank_streak == 1:
+                cleaned.append('')
+        else:
+            blank_streak = 0
+            cleaned.append(line)
+
+    text = '\n'.join(cleaned).strip()
+
+    # ── 6. Build widget block (updated for widgets API) ──
+    main_sym = coin["symbol"] + "USDT"  # e.g. "DOTUSDT"
+    widgets = []
+
+    secondary_sym = random.choice(SECONDARY_COINS)
+    secondary_tag = "$" + secondary_sym.replace("USDT", "")
+    
+    # Append secondary tag text to the content as requested
+    text = text.rstrip() + f"\n\n${coin["symbol"]}" +f"\n\n{secondary_tag}\n"
+    
+    widgets.append({
+        "type": "candle_chart",
+        "symbol": main_sym,
+        "interval": "1h"
+    })
+
+
+    # ── 7. Final pass — strip trailing spaces on every line ──
+    final = '\n'.join(line.rstrip() for line in text.splitlines())
+
+    return final, widgets
 
 
 def process_post_layout(content: str, coin_tag: str) -> str:
@@ -1353,6 +1450,8 @@ def generate_post(client: genai.Client, post_type_name: str, coin: dict,
             max_output_tokens=3000,
         )
     )
+    if not response.text:
+        raise ValueError(f"Generation failed: response.text is empty or blocked by safety filters. Full response: {response}")
     return response.text.strip()
 
 
@@ -1370,6 +1469,8 @@ def generate_post_with_gemma(client: genai.Client, post_type_name: str, coin: di
             max_output_tokens=3000,
         )
     )
+    if not response.text:
+        raise ValueError(f"Gemma 4 generation failed: response.text is empty or blocked. Full response: {response}")
     return response.text.strip()
 
 
@@ -1501,97 +1602,7 @@ def generate_advanced_chart(symbol: str, klines: list) -> bytes | None:
             plt.close(fig)
 
 
-def retrieve_search_image(rotator: GeminiClientRotator, symbol: str, topic: str) -> bytes | None:
-    """Uses LLM with Google Search grounding to retrieve a public direct image URL for the coin/topic, validates and downloads it."""
-    prompt = (
-        f"Search the web using Google Search grounding. Find a valid, high-quality, public direct image URL "
-        f"related to {symbol} (like a price chart, news visual, or logo) for the topic: '{topic}'. "
-        f"The URL must end with a common image extension like .png, .jpg, or .jpeg. "
-        f"Return ONLY the raw direct image URL on a single line, with absolutely no markdown formatting, quotes, or other text."
-    )
-    
-    img_url = None
-    failed_keys_count = 0
-    max_attempts = len(rotator.clients)
-    
-    # Try Gemini clients first
-    while failed_keys_count < max_attempts:
-        try:
-            client = rotator.get_client()
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[{"google_search": {}}],
-                    temperature=0.2
-                )
-            )
-            text = response.text.strip()
-            if text.startswith("http"):
-                img_url = text
-                log.info(f"   Image search URL found (Gemini): {img_url}")
-                break
-            else:
-                failed_keys_count += 1
-                rotator.rotate()
-        except Exception as e:
-            log.warning(f"   Gemini search failed on key index {rotator.current_index}: {e}")
-            failed_keys_count += 1
-            if failed_keys_count < max_attempts:
-                rotator.rotate()
-                time.sleep(1)
-            else:
-                break
-                
-    # If Gemini failed or is exhausted, try fallback model Gemma 4
-    if not img_url:
-        try:
-            log.info("   All Gemini keys exhausted. Falling back to Gemma 4 for image search...")
-            client = rotator.get_client()
-            response = client.models.generate_content(
-                model="gemma-4-26b-a4b-it",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    tools=[{"google_search": {}}],
-                    temperature=0.2
-                )
-            )
-            text = response.text.strip()
-            if text.startswith("http"):
-                img_url = text
-                log.info(f"   Image search URL found (Gemma 4): {img_url}")
-        except Exception as e:
-            log.warning(f"   Gemma 4 search failed: {e}")
-            
-    if not img_url:
-        return None
-        
-    if " " in img_url:
-        img_url = img_url.split()[0]
-    img_url = img_url.strip("`*\"'")
-    
-    # Validate and download
-    try:
-        r = requests.head(img_url, timeout=5, headers={"User-Agent": "Mozilla/5.0"})
-        content_type = r.headers.get("content-type", "")
-        if r.status_code == 200 and "image" in content_type:
-            r_get = requests.get(img_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-            if r_get.status_code == 200:
-                log.info(f"   Successfully downloaded search image ({len(r_get.content)} bytes)")
-                return r_get.content
-        else:
-            log.warning(f"   URL HEAD check failed for {img_url}: Status={r.status_code}, Type={content_type}")
-            
-        r_get = requests.get(img_url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
-        content_type = r_get.headers.get("content-type", "")
-        if r_get.status_code == 200 and "image" in content_type:
-            log.info(f"   Successfully downloaded search image via GET ({len(r_get.content)} bytes)")
-            return r_get.content
-            
-    except Exception as e:
-        log.warning(f"   Failed to validate/download image from {img_url}: {e}")
-        
-    return None
+
 
 
 class ImageUploader:
@@ -1687,7 +1698,7 @@ class ImageUploader:
 # BINANCE SQUARE POSTER
 # ─────────────────────────────────────────────
 
-def post_to_binance_square(content: str, image_urls: list = None) -> dict:
+def post_to_binance_square(content: str, image_urls: list = None, widgets: list = None) -> dict:
     headers = {
         "X-Square-OpenAPI-Key": BINANCE_SQUARE_KEY,
         "Content-Type": "application/json",
@@ -1700,13 +1711,18 @@ def post_to_binance_square(content: str, image_urls: list = None) -> dict:
     else:
         payload["contentType"] = 1
 
+    if widgets:
+        payload["widgets"] = widgets
+
     response = requests.post(
         BINANCE_POST_ENDPOINT,
         headers=headers,
         json=payload,
         timeout=15
     )
-    return response.json()
+    resp_json = response.json()
+    print(f"📨 DEBUG: API RESPONSE: {json.dumps(resp_json, indent=2, ensure_ascii=False)}")
+    return resp_json
 
 
 # ─────────────────────────────────────────────
@@ -1807,47 +1823,60 @@ def run_daily_session():
         log.warning("No remaining time in today's active window. Skipping scheduling.")
         return
 
-    cycle_start = get_cycle_start(now_ist)
+    # Calculate proportion of posts to schedule
+    total_window_duration = (cycle_end - get_cycle_start(now_ist)).total_seconds() # 8 hours (28800 seconds)
+    proportion = max(0.1, min(1.0, remaining_seconds / total_window_duration))
+    
     base_n = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
+    n_posts = max(1, int(base_n * proportion))
     
-    # We want 30% of posts to occur between 6 AM and 8 AM
-    special_start = cycle_end.replace(hour=6, minute=0, second=0, microsecond=0)
-    special_end = cycle_end.replace(hour=8, minute=0, second=0, microsecond=0)
+    # Generate schedule times within the remaining window
+    morning_start = cycle_end.replace(hour=6, minute=0, second=0, microsecond=0)
+    morning_end = cycle_end.replace(hour=9, minute=0, second=0, microsecond=0)
+
+    timestamps_ist = []
     
-    num_special = int(base_n * 0.30)
-    num_normal = base_n - num_special
-    
-    full_schedule = []
-    
-    # 6 AM to 8 AM posts
-    for _ in range(num_special):
-        random_sec = random.randint(0, int((special_end - special_start).total_seconds()))
-        full_schedule.append(special_start + timedelta(seconds=random_sec))
+    if now_ist < morning_end:
+        n_morning = int(n_posts * 0.30)
+        n_other = n_posts - n_morning
         
-    # Rest of the active window posts
-    chunk1_start = cycle_start
-    chunk1_end = special_start
-    chunk2_start = special_end
-    chunk2_end = cycle_end
-    
-    chunk1_dur = (chunk1_end - chunk1_start).total_seconds()
-    chunk2_dur = (chunk2_end - chunk2_start).total_seconds()
-    total_normal_dur = chunk1_dur + chunk2_dur
-    
-    for _ in range(num_normal):
-        r = random.uniform(0, total_normal_dur)
-        if r < chunk1_dur:
-            full_schedule.append(chunk1_start + timedelta(seconds=r))
-        else:
-            full_schedule.append(chunk2_start + timedelta(seconds=r - chunk1_dur))
+        actual_morning_start = max(now_ist, morning_start)
+        morning_duration = (morning_end - actual_morning_start).total_seconds()
+        
+        for _ in range(n_morning):
+            if morning_duration > 0:
+                timestamps_ist.append(actual_morning_start + timedelta(seconds=random.randint(0, int(morning_duration))))
+            else:
+                timestamps_ist.append(now_ist)
+                
+        # Distribute remaining 70% outside the morning window
+        valid_ranges = []
+        if now_ist < morning_start:
+            valid_ranges.append((now_ist, morning_start))
+        if morning_end < cycle_end:
+            valid_ranges.append((max(now_ist, morning_end), cycle_end))
             
-    # Keep only the timestamps that are in the future
-    timestamps_ist = sorted([ts for ts in full_schedule if ts > now_ist])
-    n_posts = len(timestamps_ist)
-    
-    if n_posts == 0:
-        log.warning("No posts fell into the remaining time. Skipping scheduling.")
-        return
+        for _ in range(n_other):
+            if valid_ranges:
+                total_dur = sum((r[1] - r[0]).total_seconds() for r in valid_ranges)
+                if total_dur > 0:
+                    r = random.uniform(0, total_dur)
+                    for start_dt, end_dt in valid_ranges:
+                        dur = (end_dt - start_dt).total_seconds()
+                        if r <= dur:
+                            timestamps_ist.append(start_dt + timedelta(seconds=random.randint(0, int(dur))))
+                            break
+                        r -= dur
+                else:
+                    timestamps_ist.append(now_ist)
+            else:
+                timestamps_ist.append(now_ist)
+    else:
+        # Past the morning window, distribute uniformly
+        for _ in range(n_posts):
+            timestamps_ist.append(now_ist + timedelta(seconds=random.randint(0, int(remaining_seconds))))
+            
+    timestamps_ist.sort()
     
     log.info(f"📅 Daily session: {n_posts} posts scheduled across remaining active window")
     log.info(f"   First post: {timestamps_ist[0].strftime('%I:%M %p IST')}")
@@ -2042,24 +2071,11 @@ def execute_active_schedule():
         if not content:
             continue
 
-        content = process_post_layout(content, coin["tag"])
+        content = restrict_math_operators(content)
         if not content:
             continue
 
-        # Append {future} widget — THE most important structural element
-        content = append_widget(content, coin, post_type_name)
-
-        # Verification: ensure {future} widget is present before sending
-        if "{future}" not in content:
-            log.warning(f"   ⚠️ Widget missing after append_widget! Force-appending {coin['symbol']}USDT widget.")
-            content = content.rstrip() + f"\n{{future}}({coin['symbol']}USDT)"
-
-        # Verification: ensure zero hashtags
-        import re as _re
-        if _re.search(r'#\w+', content):
-            log.warning("   ⚠️ Hashtag detected in content — stripping before post.")
-            content = _re.sub(r'#\w+', '', content).strip()
-
+        content, widgets = format_post(content, coin, post_type_name)
         klines = fetcher.fetch_klines(coin["symbol"])
 
         # Image generation/upload
@@ -2067,17 +2083,8 @@ def execute_active_schedule():
         try:
             image_bytes = None
             uploader = ImageUploader(BINANCE_SQUARE_KEY)
-            technical_types = {"long_signal", "short_signal", "scenario_analysis"}
-            if post_type_name in technical_types:
-                log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
-                image_bytes = generate_advanced_chart(coin["symbol"], klines)
-            else:
-                log.info(f"   🔍 Signal/narrative post — searching web for {coin['symbol']} image...")
-                search_topic = f"{coin['tag']} price action and news"
-                image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
-                if not image_bytes:
-                    log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
-                    image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            log.info(f"   📊 Generating advanced chart for {coin['symbol']}...")
+            image_bytes = generate_advanced_chart(coin["symbol"], klines)
             
             if image_bytes:
                 cdn_url = uploader.upload(image_bytes)
@@ -2094,7 +2101,7 @@ def execute_active_schedule():
             save_bot_state()
                 
             log.info(f"📤 Posting to Binance Square...")
-            result = post_to_binance_square(content, image_urls)
+            result = post_to_binance_square(content, image_urls, widgets=widgets)
 
             if result.get("code") == "000000":
                 post_id = result.get("data", {}).get("id", "unknown")
@@ -3043,23 +3050,11 @@ def api_post_now():
             raise ValueError("Failed to generate content after all API key attempts.")
 
         # Sanitize and format post layout
-        content = process_post_layout(content, coin["tag"])
+        content = restrict_math_operators(content)
         if not content:
             raise ValueError("Sanitized post content is empty.")
 
-        # Append {future} widget — required for every post
-        content = append_widget(content, coin, post_type_name)
-
-        # Verification: ensure {future} widget is present
-        if "{future}" not in content:
-            log.warning(f"   ⚠️ Widget missing! Force-appending widget for {coin['symbol']}.")
-            content = content.rstrip() + f"\n{{future}}({coin['symbol']}USDT)"
-
-        # Verification: ensure zero hashtags
-        import re as _re2
-        if _re2.search(r'#\w+', content):
-            log.warning("   ⚠️ Hashtag detected — stripping before post.")
-            content = _re2.sub(r'#\w+', '', content).strip()
+        content, widgets = format_post(content, coin, post_type_name)
 
         # Fetch klines for image generation
         klines = fetcher.fetch_klines(coin["symbol"])
@@ -3070,20 +3065,8 @@ def api_post_now():
             image_bytes = None
             uploader = ImageUploader(BINANCE_SQUARE_KEY)
 
-            # Technical post types: generate Matplotlib chart
-            technical_types = {"long_signal", "short_signal", "scenario_analysis"}
-            if post_type_name in technical_types:
-                log.info(f"   📊 Signal post detected. Generating advanced chart for {coin['symbol']}...")
-                image_bytes = generate_advanced_chart(coin["symbol"], klines)
-            else:
-                # Narrative / thuchoang posts: try to search the web first
-                log.info(f"   🔍 Narrative post — searching web for {coin['symbol']} image...")
-                search_topic = f"{coin['tag']} price action and news"
-                image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
-
-                if not image_bytes:
-                    log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
-                    image_bytes = generate_advanced_chart(coin["symbol"], klines)
+            log.info(f"   📊 Generating advanced chart for {coin['symbol']}...")
+            image_bytes = generate_advanced_chart(coin["symbol"], klines)
 
             if image_bytes:
                 cdn_url = uploader.upload(image_bytes)
@@ -3093,7 +3076,7 @@ def api_post_now():
             log.warning(f"   ⚠️ Manual trigger image upload workflow failed: {img_err}. Posting as text-only.")
 
         log.info(f"📤 Manual trigger: Posting to Binance Square...")
-        result = post_to_binance_square(content, image_urls)
+        result = post_to_binance_square(content, image_urls, widgets=widgets)
 
         if result.get("code") == "000000":
             post_id = result.get("data", {}).get("id", "unknown")
@@ -3168,23 +3151,23 @@ def background_worker():
 
             if now_ist < cycle_start:
                 wait_seconds = (cycle_start - now_ist).total_seconds()
-                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 2:00 PM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset previous stats if not already reset
                 if bot_state["posts_published"] > 0 or bot_state["posts_failed"] > 0 or bot_state["schedule"]:
                     reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until cycle start (2:00 PM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until cycle start (11:30 AM IST)")
                 
             elif now_ist >= cycle_end:
                 tomorrow_start = get_cycle_start(now_ist + timedelta(days=1))
                 wait_seconds = (tomorrow_start - now_ist).total_seconds()
-                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 2:00 PM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset cycle
                 reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (2:00 PM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (11:30 AM IST)")
                 
             else:
                 # We are inside the active window! Run/Resume daily session
