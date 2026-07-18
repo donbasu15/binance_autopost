@@ -412,79 +412,123 @@ class GeminiClientRotator:
     def has_multiple_keys(self) -> bool:
         return len(self.clients) > 1
 
-POST_TYPES = [
-    {
-        "name": "news_reaction",
-        "description": (
-            "React to macro regulatory updates (e.g., European MiCA compliance, US Clarity Act), "
-            "institutional capital integration (e.g., BlackRock, JPMorgan, BNY Mellon), "
-            "or core infrastructure changes (e.g., Ethereum Lean Chain upgrades) from the news data. "
-            "Write a sharp, viral, KOL-style reaction. Use text descriptions for math comparisons and treat price pathways safely."
-        ),
-        "example": (
-            "EU MiCA compliance deadline is here.\n"
-            "This isn't about regulation—it is about institutional permission.\n"
-            "BlackRock and JPMorgan are already positioning their infrastructure.\n"
-            "Retail is panic selling but the smart money is lock-stepping into the next phase.\n"
-            "Watch the flows."
-        )
-    },
-    {
-        "name": "trending_coin_take",
-        "description": (
-            "Analyze a coin showing strong relative strength divergence/anomaly (green gains or holding key EMAs "
-            "while the rest of the market bleeds). Keep it aggressive, highlighting the divergence. Use text descriptions "
-            "for comparisons and treat pathways safely."
-        ),
-        "example": (
-            "$SUI is printing green candles while Bitcoin is down 4% today.\n"
-            "Relative strength is screaming buy as it holds the EMA50 with massive support.\n"
-            "Memes are dying but real utility is decoupling from the baseline bleeding.\n"
-            "Keep your eyes on this breakout."
-        )
-    },
-    {
-        "name": "dark_humor_take",
-        "description": (
-            "Write a sarcastic, contrarian retail psychology take on market capitulation. "
-            "Use emotional retail pain, leverage wipeouts, and panic selling hooks to drive engagement. "
-            "Use text descriptions for math comparison operators."
-        ),
-        "example": (
-            "Thank you to everyone who panic sold their spot bags at the absolute bottom.\n"
-            "Your capitulation has successfully funded the next leg up for the institutional whales.\n"
-            "Leverage traders are wiped out and retail is crying in the comments.\n"
-            "A beautiful day in crypto."
-        )
-    },
-    {
-        "name": "whale_flow_alerts",
-        "description": (
-            "Highlight institutional wallet movements, ETF outflows, large-scale token burns, or company balance sheet shifts. "
-            "Make it feel like insider smart money insight. Use text descriptions for comparisons."
-        ),
-        "example": (
-            "ETF net outflows hit 150 million dollars today but Grayscale is finally running dry.\n"
-            "Meanwhile, on-chain whale wallets just transferred 25,000 ETH into cold storage.\n"
-            "A massive token burn is quietly burning supply.\n"
-            "They want you to panic while they accumulate."
-        )
-    },
-    {
-        "name": "targets_and_signals",
-        "description": (
-            "Provide a highly scannable price ladder for technical authority. No dense technical configurations. "
-            "Only clean price targets and next levels using text descriptions for math operators."
-        ),
-        "example": (
-            "$BTC holding support. Here is the scannable ladder:\n"
-            "Current price: 65,000 USD\n"
-            "Next targets: 66,500 ➡️ 68,000 ➡️ 72,000\n"
-            "Under support at 63,200\n"
-            "Patience is the trade."
-        )
-    }
-]
+# ─────────────────────────────────────────────
+# POST INSTRUCTIONS — 5 templates from top Binance Square earner analysis
+# ─────────────────────────────────────────────
+
+POST_INSTRUCTIONS = {
+
+"quick_narrative": """
+Write a SHORT narrative post (Template A). Structure:
+- Line 1: [emoji] + one sharp take on the coin (use actual price from data)
+- Lines 2-4: 2-3 lines of analysis referencing real price action, candle structure, or momentum from the data
+- Line 5: Your personal stance ("I'm taking the long" / "I'm staying bearish" / "I'm watching for...")
+- Line 6: Optional casual closing question or comment (😉 optional)
+- NO entry/SL/TP numbers in this template
+- Max 200 words
+""",
+
+"long_signal": """
+Write a LONG SIGNAL post (Template B). Structure:
+- Line 1: 🚀 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
+- Blank line
+- Entry: [price derived from live data — use current price ±1-2%]
+- Blank line
+- SL: [price — 4-6% below entry]
+- Blank line
+- TP1: [+3-5% from entry]
+- TP2: [+7-10% from entry]
+- TP3: [+15-20% from entry]
+- Blank line
+- [1-2 lines: RSI reading, MACD direction, trend — use ACTUAL computed values from data]
+- Blank line
+- ‼️ Risk Management is Important.
+- Blank line
+- Trade Here 👇🏻
+""",
+
+"short_signal": """
+Write a SHORT SIGNAL post (Template C). Structure:
+- Line 1: 🩸 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
+- Blank line
+- Entry: [price — at or slightly above current price]
+- SL: [price — 3-5% above entry]
+- Blank line
+- TP1: [price — 3-5% below entry]
+- TP2: [price — 7-10% below entry]
+- TP3: [price — 12-18% below entry]
+- Blank line
+- [1-2 lines: overbought RSI, rejection, exhaustion — use ACTUAL computed values]
+- Blank line
+- ‼️ Risk Management is Important.
+- Blank line
+- Trade Here 👇🏻
+""",
+
+"thuchoang_style": """
+Write a post in thuchoang90's style (Template D). Structure:
+- Line 1: One-liner metaphor or personality observation about the coin's price action (witty, trader voice)
+  Examples: "SOL is trapped in a boring range; fading the local resistance until the trend decides."
+            "Gold is testing the MA99 ceiling; one clean breakout and we're printing green candles."
+- Blank line
+- "[Long/Short] play on $COIN." or "Interesting [long/short] on $COIN."
+- Blank line
+- "Entry: [price] - [price]"  (or "Entry point:" or "Execution:")
+- "TP [price] | [price]"  or "Target: [price] / [price]"
+- "SL [price]"
+- Blank line
+- [One-liner TA reason referencing MA/RSI from actual data]
+- Blank line
+- "Be careful: [one specific risk scenario with a price level]"
+- "Never all-in, fam. Use a size that fits your own account."
+""",
+
+"scenario_analysis": """
+Write a SCENARIO ANALYSIS post (Template E). Structure:
+- Line 1: ‼️$COIN is [situation description at current price]
+- Blank line
+- 🟢 Bullish Scenario:
+- [2 lines of bullish case — what needs to hold, where it goes]
+- Blank line
+- 🔴 Bearish Scenario:
+- [2 lines of bearish case — what fails, where it goes]
+- Blank line
+- [1 line personal stance — "I'm waiting for confirmation rather than chasing"]
+- Blank line
+- Trade Here 👇🏻
+""",
+}
+
+# Weighted post type mix matching top earner ratios
+POST_MIX = {
+    "quick_narrative":   40,   # most common — 40% of posts
+    "long_signal":       20,   # full signal long
+    "short_signal":      15,   # full signal short
+    "thuchoang_style":   15,   # dual-widget casual style
+    "scenario_analysis": 10,   # bull/bear layout
+}
+
+# Secondary coins rotation for thuchoang_style dual-widget posts
+SECONDARY_COINS = ["TRADOORUSDT", "AKEUSDT", "ESPORTSUSDT", "SKHYUSDT"]
+
+# Legacy POST_TYPES list kept for non-signal post_type lookups (will not be used for content generation)
+POST_TYPES = []
+
+def _select_signal(rsi, macd, boll, vol) -> str:
+    """Map technical indicators to the best post template."""
+    if rsi is not None and rsi < 30:
+        return "long_signal"        # oversold → long signal
+    if rsi is not None and rsi > 70:
+        return "short_signal"       # overbought → short signal
+    if macd and macd.get("crossover") == "bullish":
+        return "long_signal"
+    if macd and macd.get("crossover") == "bearish":
+        return "short_signal"
+    if boll and boll.get("squeeze"):
+        return "scenario_analysis"  # squeeze → both scenarios possible
+    if vol and vol.get("trend") == "spike":
+        return "quick_narrative"    # volume spike → quick take
+    return "quick_narrative"        # default → quick narrative
 
 def is_low_sentiment_regime(live_data) -> bool:
     """
@@ -529,36 +573,17 @@ def get_macro_regulatory_headline(news_list: list) -> str | None:
 
 def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> list[str]:
     """
-    Structures the programmatic daily posting output based on the regime:
-    If low_sentiment (F&G < 25):
-      - news_reaction (40%)
-      - trending_coin_take (25%)
-      - dark_humor_take (15%)
-      - whale_flow_alerts (10%)
-      - targets_and_signals (10%)
-    Else:
-      - news_reaction (35%)
-      - trending_coin_take (20%)
-      - dark_humor_take (15%)
-      - whale_flow_alerts (15%)
-      - targets_and_signals (15%)
+    Structures the programmatic daily posting output based on POST_MIX weights
+    derived from analysis of top Binance Square commission-earning profiles:
+      - quick_narrative:   40%
+      - long_signal:       20%
+      - short_signal:      15%
+      - thuchoang_style:   15%
+      - scenario_analysis: 10%
+    The low_sentiment parameter is accepted for compatibility but no longer changes the mix.
     """
-    if low_sentiment:
-        ratios = [
-            ("news_reaction", 0.40),
-            ("trending_coin_take", 0.25),
-            ("dark_humor_take", 0.15),
-            ("whale_flow_alerts", 0.10),
-            ("targets_and_signals", 0.10)
-        ]
-    else:
-        ratios = [
-            ("news_reaction", 0.35),
-            ("trending_coin_take", 0.20),
-            ("dark_humor_take", 0.15),
-            ("whale_flow_alerts", 0.15),
-            ("targets_and_signals", 0.15)
-        ]
+    total_weight = sum(POST_MIX.values())
+    ratios = [(name, weight / total_weight) for name, weight in POST_MIX.items()]
     portfolio = []
     temp_counts = {}
     allocated = 0
@@ -566,16 +591,16 @@ def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> lis
         count = int(round(n_posts * ratio))
         temp_counts[name] = count
         allocated += count
-        
+
     difference = n_posts - allocated
     if difference != 0:
-        temp_counts["news_reaction"] += difference
-        if temp_counts["news_reaction"] < 0:
-            temp_counts["news_reaction"] = 0
-            
+        temp_counts["quick_narrative"] += difference
+        if temp_counts["quick_narrative"] < 0:
+            temp_counts["quick_narrative"] = 0
+
     for name, count in temp_counts.items():
         portfolio.extend([name] * count)
-        
+
     random.shuffle(portfolio)
     return portfolio
 
@@ -609,14 +634,8 @@ COINS = [
     {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
 ]
 
-# High-traffic Binance Square hashtags — used by tag_metadata pipeline only
-HASHTAG_POOL = [
-    "#BinanceSquare", "#crypto", "#Bitcoin", "#Ethereum",
-    "#DeFi", "#Altcoins", "#BullRun", "#CryptoNews",
-    "#Web3", "#blockchain", "#BTC", "#ETH", "#BNB", "#SOL",
-    "#CryptoTrading", "#DYOR", "#hodl", "#cryptomarket",
-    "#TechnicalAnalysis", "#CryptoSignals", "#CryptoInvesting",
-]
+# Note: HASHTAG_POOL removed — top earners use ZERO hashtags.
+# Discovery is handled by the {future}(SYMBOLUSDT) widget appended to every post.
 
 # ─────────────────────────────────────────────
 # SANITIZATION, LAYOUT & OUTREACH HELPERS
@@ -774,48 +793,46 @@ def format_layout_scannability(content: str) -> str:
 
 def tag_metadata(content: str, coin_tag: str) -> str:
     """
-    Dynamically attach a combination of primary high-volume macro hashtags along
-    with the specific analyzed token ticker to maximize indexing visibility.
-    Hard cap: 4 hashtags total (Binance Square recommended maximum to avoid spam filters).
-    Formula: 1 coin tag + 1 anchor (#BinanceSquare) + 2 random macro tags = 4.
+    Strips any hashtags that Gemini may have injected into the post body.
+    Top earners use ZERO hashtags — discovery comes from the {future} widget, not tags.
     """
     import re
     # Strip any existing hashtags from the content body
     content_clean = re.sub(r'#\w+', '', content).strip()
-    # Strip any trailing cashtag lines that Gemini may have included
-    content_clean = re.sub(r'(\$[A-Z]{2,10}\s*)+$', '', content_clean).strip()
-
-    # Fixed platform anchor — always position 1 for discoverability
-    anchor_tag = "#BinanceSquare"
-    # Macro pool — pick exactly 3 to fill slots 3-5
-    macro_pool = [
-        "#Bitcoin", "#Ethereum", "#SOL", "#DeFi", "#BullRun",
-        "#Altcoins", "#crypto", "#CryptoNews", "#CryptoTrading"
-    ]
-    selected_macro = random.sample(macro_pool, 3)
-    # Coin-specific hashtag is always slot 2
-    clean_ticker = coin_tag.replace("$", "").upper()
-    coin_hashtag = f"#{clean_ticker}"
-    # Final list: exactly 5 hashtags
-    all_hashtags = [anchor_tag, coin_hashtag] + selected_macro
-    tags_str = " ".join(all_hashtags) + " "
-    return f"{content_clean}\n\n{tags_str}"
+    return content_clean
 
 
 def process_post_layout(content: str, coin_tag: str) -> str:
     """
-    Complete pipeline processing for scannability, preview hoisting, tagging, and math operators sanitization.
+    Complete pipeline processing for scannability, math operators sanitization, and hashtag removal.
+    Widget appending is handled separately by append_widget().
     """
     if not content:
         return ""
     # Restrict math operators
     content = restrict_math_operators(content)
-    # Hoist keywords
-    content = hoist_preview_keywords(content)
-    # Enforce scannability
-    content = format_layout_scannability(content)
-    # Tag metadata
+    # Strip any hashtags Gemini may have injected
     content = tag_metadata(content, coin_tag)
+    return content
+
+
+def append_widget(content: str, coin: dict, post_type: str) -> str:
+    """
+    Appends the {future}(SYMBOLUSDT) widget as a post-processing step AFTER Gemini generates text.
+    For thuchoang_style posts, adds a secondary coin widget (dual-widget format).
+    This is the single most important structural element for Binance Square discovery.
+    """
+    symbol = coin["symbol"] + "USDT"  # e.g., "BTC" -> "BTCUSDT"
+    widget = f"{{future}}({symbol})"
+
+    # Only add widget(s) if not already present (safety check)
+    if "{future}" not in content and "{spot}" not in content:
+        if post_type == "thuchoang_style":
+            secondary = random.choice(SECONDARY_COINS)
+            secondary_tag = f"${secondary.replace('USDT', '')}"
+            content = content.rstrip() + f"\n\n{secondary_tag}\n\ud83d\udc47\ud83d\udc47\ud83d\udc47\n{widget}\n{{future}}({secondary})"
+        else:
+            content = content.rstrip() + f"\n{widget}"
     return content
 
 def find_trending_coin_anomaly(live_data, fetcher) -> dict:
@@ -1278,81 +1295,53 @@ def format_coin_data(coin: dict, market: dict, fetcher: LiveDataFetcher,
 # GEMINI PROMPT BUILDER
 # ─────────────────────────────────────────────
 
-SYSTEM_PROMPT = """You are a crypto KOL (Key Opinion Leader) posting on Binance Square.
-Your posts must feel 100% human — written by a real trader with real data, not AI.
-You follow real market sentiment and write with personality, confidence, and edge.
+SYSTEM_PROMPT = """You are a professional crypto trader posting on Binance Square.
+You write like the top commission-earning KOLs: confident, specific, personal, short.
 
-You will be given LIVE market data (prices, % changes, news headlines, Fear & Greed index).
-USE THIS DATA to write the post. Do not use guessed or invented numbers.
-If data says ETH is at $3,412 — use $3,412, not some random price.
+VOICE: First person. "I'm watching", "I'm taking", "I'm staying bearish".
+Real trader — not an AI, not a newsletter, not a bot.
 
-STRICT RULES:
-1. Each post MUST feel different from previous ones in tone, structure, coin, and format.
-2. Keep posts SHORT: 40–120 words maximum. This is a short post platform.
-3. Use cashtags ($BTC, $ETH etc.) naturally in the body — at least 1 per post.
-4. Hashtags go at the very bottom only. Use 2–4 max.
-5. NEVER use bullet formatting like "•" for entry/target posts — use line breaks only.
-6. NO external URLs or website links of any kind.
-7. NO social media handles (no @username, no Telegram, no Discord, no WhatsApp).
-8. NO guaranteed returns or "100% sure" language.
-9. NO financial advice disclaimers — short posts on Binance Square don't need them.
-10. No data sources mentioned by name (don't say "CoinGecko says..." — just state the fact).
-11. Do NOT repeat the same coin or format as recent posts.
-12. Use emojis sparingly — 1–3 per post max, never mid-sentence.
-13. Vary your sentence length. Mix punchy 3-word lines with longer ones.
-14. Occasional typos or casual grammar are fine — makes it feel human.
-15. NEVER start a post with "I think" or "In my opinion".
-16. Output ONLY the post text. No preamble, no explanation, no quotes around it.
-17. NEVER use mathematical comparison symbols like '<' or '>'. Always write them out as text descriptions (e.g., 'less than 5%', 'greater than 20%', 'less than', 'greater than') to ensure the parser does not interpret standard mathematical symbols (< or >) as broken XML code opening fragments.
-18. Treat price pathways using arrows (e.g., '➡️') safely as plain text string characters."""
+STRUCTURE RULES:
+1. Follow the template given EXACTLY — spacing, line breaks, emoji placement.
+2. Use REAL numbers from the live data provided — never invent prices.
+3. For entry zones: set 1-2% range around current price. For SL: 4-6% away. For TPs: realistic increments.
+4. Keep it SHORT — 150-350 chars for narratives, up to 500 for full signals.
+5. ZERO hashtags — none at all.
+6. Do NOT add {future} or {spot} widgets — those are added automatically after you write.
+7. End signals with "Trade Here \ud83d\udc47\ud83c\udffb" on its own line.
+8. Emojis: use 1-3 max. Only opening emoji + maybe one closing. Never mid-sentence.
+9. NEVER use mathematical comparison symbols like '<' or '>'. Write them out (e.g. 'less than', 'greater than').
+10. Output ONLY the post text. No explanation, no preamble."""
 
 
-def build_user_prompt(post_type: dict, coin: dict, live_data_block: str,
+def build_user_prompt(post_type_name: str, coin: dict, live_data_block: str,
                       recent_coins: list, recent_types: list, macro_headline: str = None) -> str:
+    """Builds the Gemini user prompt using the new POST_INSTRUCTIONS templates."""
     recent_coins_str = ", ".join(recent_coins[-5:]) if recent_coins else "none"
     recent_types_str = ", ".join(recent_types[-3:]) if recent_types else "none"
 
-    headline_focus = ""
-    if post_type['name'] == 'news_reaction':
-        if macro_headline:
-            headline_focus = f"FOCUS REGULATORY/INSTITUTIONAL UPDATE HEADLINE: {macro_headline}\n"
-        else:
-            headline_focus = "FOCUS THE NEWS REACTION EXCLUSIVELY ON MACRO REGULATORY UPDATES, INSTITUTIONAL INTEGRATIONS, OR CORE UPGRADES.\n"
-    elif post_type['name'] == 'whale_flow_alerts' and macro_headline:
-        headline_focus = f"WHALE/INSTITUTIONAL FLOW ALERT TO REFERENCE: {macro_headline}\n"
-    elif post_type['name'] == 'trending_coin_take':
-        headline_focus = (
-            f"FOCUS ON RELATIVE STRENGTH DIVERGENCE: {coin['tag']} is showing strength "
-            f"against the market baseline. Highlight this anomaly aggressively.\n"
-        )
+    template_instructions = POST_INSTRUCTIONS.get(post_type_name, POST_INSTRUCTIONS["quick_narrative"])
 
     return f"""{live_data_block}
 
-{headline_focus}Write a Binance Square short post in this format: [{post_type['name']}]
-
-FORMAT DESCRIPTION: {post_type['description']}
-
-EXAMPLE (use as style guide ONLY, do NOT copy):
-{post_type['example']}
-
 PRIMARY COIN: {coin['tag']}
-You may include 1-2 other related coins for context.
-
 AVOID these coins (used recently): {recent_coins_str}
 AVOID these post types (used recently): {recent_types_str}
 
-Do NOT include any hashtags in the post body. Do NOT add hashtag lines. The post pipeline will handle metadata tagging automatically.
+POST TEMPLATE TO FOLLOW:
+{template_instructions}
 
-Write the post now. Output ONLY the post body text, nothing else."""
+Write the post now. Output ONLY the post body text, nothing else.
+ZERO hashtags. Do NOT write {{future}} or {{spot}} — those are auto-appended."""
 
 
 # ─────────────────────────────────────────────
 # GEMINI CONTENT GENERATOR
 # ─────────────────────────────────────────────
 
-def generate_post(client: genai.Client, post_type: dict, coin: dict,
+def generate_post(client: genai.Client, post_type_name: str, coin: dict,
                   live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None) -> str:
-    prompt = build_user_prompt(post_type, coin, live_data_block, recent_coins, recent_types, macro_headline)
+    prompt = build_user_prompt(post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline)
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -1367,10 +1356,10 @@ def generate_post(client: genai.Client, post_type: dict, coin: dict,
     return response.text.strip()
 
 
-def generate_post_with_gemma(client: genai.Client, post_type: dict, coin: dict,
+def generate_post_with_gemma(client: genai.Client, post_type_name: str, coin: dict,
                              live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None) -> str:
     """Fallback generator using gemma-4-26b-a4b-it if Gemini keys are exhausted."""
-    prompt = build_user_prompt(post_type, coin, live_data_block, recent_coins, recent_types, macro_headline)
+    prompt = build_user_prompt(post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline)
     response = client.models.generate_content(
         model="gemma-4-26b-a4b-it",
         contents=prompt,
@@ -1961,77 +1950,41 @@ def execute_active_schedule():
             except Exception as e:
                 log.warning(f"Live data refresh failed: {e}")
 
-        # Pick post type and coin
+        # Pick post type name from schedule or derive from indicators
         assigned_type_name = item.get("type", "Pending")
-        if assigned_type_name != "Pending" and assigned_type_name:
-            post_type = next((t for t in POST_TYPES if t["name"] == assigned_type_name), None)
+        if assigned_type_name and assigned_type_name != "Pending" and assigned_type_name in POST_INSTRUCTIONS:
+            post_type_name = assigned_type_name
         else:
-            post_type = None
-
-        if not post_type:
-            if is_low_sentiment_regime(live_data):
-                choices = ["news_reaction", "trending_coin_take", "dark_humor_take", "whale_flow_alerts", "targets_and_signals"]
-                weights = [40, 25, 15, 10, 10]
-                chosen_name = random.choices(choices, weights=weights, k=1)[0]
-                post_type = next((t for t in POST_TYPES if t["name"] == chosen_name), POST_TYPES[0])
+            # 15% random chance to force thuchoang_style for variety
+            if random.random() < 0.15:
+                post_type_name = "thuchoang_style"
             else:
-                is_news_post = random.random() < 0.5
-                if is_news_post:
-                    post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[0])
-                else:
-                    with state_lock:
-                        other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
-                    post_type = random.choice(other_types if other_types else POST_TYPES)
+                # Try to derive from indicators for the coin
+                try:
+                    klines_pre = fetcher.fetch_klines(next((c for c in COINS if c["tag"] not in recent_coins[-4:]), COINS[0])["symbol"])
+                    indicators_pre = calculate_indicators(klines_pre) if klines_pre else {}
+                    rsi_pre = indicators_pre.get("rsi")
+                    macd_pre = {"crossover": "bullish" if (indicators_pre.get("macd_hist", 0) or 0) > 0 else "bearish"}
+                    post_type_name = _select_signal(rsi_pre, macd_pre, None, None)
+                except Exception:
+                    post_type_name = random.choices(
+                        list(POST_MIX.keys()), weights=list(POST_MIX.values()), k=1
+                    )[0]
 
-        # Pick coin based on post type
+        # Pick coin (avoid recently used)
         coin = None
-        if post_type["name"] == "trending_coin_take":
-            coin = find_trending_coin_anomaly(live_data, fetcher)
-        elif post_type["name"] == "news_reaction":
-            try:
-                news_list = fetch_cryptopanic_news()
-                if news_list and isinstance(news_list, list):
-                    all_titles = " ".join([it.get("title", "").upper() for it in news_list])
-                    mentioned_coins = []
-                    for c in COINS:
-                        if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
-                            mentioned_coins.append(c)
-                    if mentioned_coins:
-                        coin = random.choice(mentioned_coins)
-            except Exception as e:
-                log.warning(f"Error scanning news headlines for coin: {e}")
-        
-        if not coin:
-            with state_lock:
-                available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
-            coin = random.choice(available_coins if available_coins else COINS)
+        with state_lock:
+            available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+        coin = random.choice(available_coins if available_coins else COINS)
 
         with state_lock:
             bot_state["schedule"][next_item_idx]["coin"] = coin["tag"]
-            bot_state["schedule"][next_item_idx]["type"] = post_type["name"]
+            bot_state["schedule"][next_item_idx]["type"] = post_type_name
+        with state_lock:
             bot_state["schedule"][next_item_idx]["status"] = "Generating"
         save_bot_state()
 
-        # Build macro/focus headline if applicable
-        macro_headline = None
-        if post_type["name"] == "news_reaction":
-            try:
-                news_list = fetch_cryptopanic_news()
-                if news_list and isinstance(news_list, list):
-                    macro_headline = get_macro_regulatory_headline(news_list)
-            except Exception as e:
-                log.warning(f"Error scanning for macro headline: {e}")
-        elif post_type["name"] == "whale_flow_alerts":
-            wf = fetch_whale_flow_metrics()
-            category = random.choice(["burn_rates", "etf_flows", "wallet_actions"])
-            if category == "wallet_actions":
-                macro_headline = random.choice(wf["wallet_actions"])
-            elif category == "etf_flows":
-                sym = coin["symbol"].upper()
-                macro_headline = wf["etf_flows"].get(sym, random.choice(list(wf["etf_flows"].values())))
-            else:
-                sym = coin["symbol"].upper()
-                macro_headline = wf["burn_rates"].get(sym, random.choice(list(wf["burn_rates"].values())))
+        macro_headline = None  # kept for API compat; not used in new templates
 
         # Build live data block
         live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
@@ -2043,8 +1996,8 @@ def execute_active_schedule():
         while failed_keys_count < max_attempts:
             try:
                 current_client = rotator.get_client()
-                log.info(f"🤖 Generating [{post_type['name']}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts})...")
-                content = generate_post(current_client, post_type, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
+                log.info(f"🤖 Generating [{post_type_name}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts})...")
+                content = generate_post(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
 
                 word_count = len(content.split())
                 if word_count < 8:
@@ -2070,7 +2023,7 @@ def execute_active_schedule():
                 else:
                     try:
                         log.info(f"   ⚠️ All Gemini keys exhausted. Falling back to Gemma 4 for final content generation...")
-                        content = generate_post_with_gemma(current_client, post_type, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
+                        content = generate_post_with_gemma(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
                         fail_streak = 0
                         break
                     except Exception as g_err:
@@ -2092,6 +2045,21 @@ def execute_active_schedule():
         content = process_post_layout(content, coin["tag"])
         if not content:
             continue
+
+        # Append {future} widget — THE most important structural element
+        content = append_widget(content, coin, post_type_name)
+
+        # Verification: ensure {future} widget is present before sending
+        if "{future}" not in content:
+            log.warning(f"   ⚠️ Widget missing after append_widget! Force-appending {coin['symbol']}USDT widget.")
+            content = content.rstrip() + f"\n{{future}}({coin['symbol']}USDT)"
+
+        # Verification: ensure zero hashtags
+        import re as _re
+        if _re.search(r'#\w+', content):
+            log.warning("   ⚠️ Hashtag detected in content — stripping before post.")
+            content = _re.sub(r'#\w+', '', content).strip()
+
         klines = fetcher.fetch_klines(coin["symbol"])
 
         # Image generation/upload
@@ -2099,12 +2067,12 @@ def execute_active_schedule():
         try:
             image_bytes = None
             uploader = ImageUploader(BINANCE_SQUARE_KEY)
-            technical_types = {"targets_and_signals"}
-            if post_type["name"] in technical_types:
+            technical_types = {"long_signal", "short_signal", "scenario_analysis"}
+            if post_type_name in technical_types:
                 log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
                 image_bytes = generate_advanced_chart(coin["symbol"], klines)
             else:
-                log.info(f"   🔍 News/trending post type detected. Searching web for {coin['symbol']} image...")
+                log.info(f"   🔍 Signal/narrative post — searching web for {coin['symbol']} image...")
                 search_topic = f"{coin['tag']} price action and news"
                 image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
                 if not image_bytes:
@@ -2137,7 +2105,7 @@ def execute_active_schedule():
 
                 with state_lock:
                     recent_coins.append(coin["tag"])
-                    recent_types.append(post_type["name"])
+                    recent_types.append(post_type_name)
                     if len(recent_coins) > 10:
                         recent_coins.pop(0)
                     if len(recent_types) > 6:
@@ -2145,7 +2113,7 @@ def execute_active_schedule():
                         
                     bot_state["schedule"][next_item_idx]["status"] = "Published"
                     bot_state["posts_published"] += 1
-                add_recent_post(post_type["name"], content, "Success", post_url)
+                add_recent_post(post_type_name, content, "Success", post_url)
             else:
                 error_code = result.get("code", "unknown")
                 error_msg  = result.get("message", "no message")
@@ -2154,7 +2122,7 @@ def execute_active_schedule():
                 with state_lock:
                     bot_state["schedule"][next_item_idx]["status"] = f"Rejected"
                     bot_state["posts_failed"] += 1
-                add_recent_post(post_type["name"], content[:80] + "...", f"Rejected ({error_code})", "#")
+                add_recent_post(post_type_name, content[:80] + "...", f"Rejected ({error_code})", "#")
 
 
                 if error_code in ("10001", "20001"):
@@ -3027,79 +2995,35 @@ def api_post_now():
             log.warning(f"Manual post live data fetch failed: {e}")
             live_data = {"market": {}, "trending": [], "news": [], "fg": {}, "fetched_at": "N/A"}
         
-        # Pick coin and type using shared recency history
+        # Pick post type using POST_MIX weights (15% chance of thuchoang_style)
         recent_coins = bot_state["recent_coins"]
         recent_types = bot_state["recent_types"]
-        
-        # Decide if this is a news post or other post based on regime
-        if is_low_sentiment_regime(live_data):
-            choices = ["news_reaction", "trending_coin_take", "dark_humor_take", "whale_flow_alerts", "targets_and_signals"]
-            weights = [40, 25, 15, 10, 10]
-            chosen_name = random.choices(choices, weights=weights, k=1)[0]
-            post_type = next((t for t in POST_TYPES if t["name"] == chosen_name), POST_TYPES[0])
+
+        if random.random() < 0.15:
+            post_type_name = "thuchoang_style"
         else:
-            is_news_post = random.random() < 0.5
-            if is_news_post:
-                post_type = next((t for t in POST_TYPES if t["name"] == "news_reaction"), POST_TYPES[0])
-            else:
-                other_types = [t for t in POST_TYPES if t["name"] != "news_reaction" and t["name"] not in recent_types[-2:]]
-                post_type = random.choice(other_types if other_types else POST_TYPES)
+            post_type_name = random.choices(
+                list(POST_MIX.keys()), weights=list(POST_MIX.values()), k=1
+            )[0]
 
-        # Pick coin based on post type
-        coin = None
-        if post_type["name"] == "trending_coin_take":
-            coin = find_trending_coin_anomaly(live_data, fetcher)
-        elif post_type["name"] == "news_reaction":
-            try:
-                news_list = fetch_cryptopanic_news()
-                if news_list and isinstance(news_list, list):
-                    all_titles = " ".join([item.get("title", "").upper() for item in news_list])
-                    mentioned_coins = []
-                    for c in COINS:
-                        if c["symbol"].upper() in all_titles or c["cg_id"].upper() in all_titles or c["tag"].upper() in all_titles:
-                            mentioned_coins.append(c)
-                    if mentioned_coins:
-                        coin = random.choice(mentioned_coins)
-            except Exception as e:
-                log.warning(f"Error scanning news headlines for coin: {e}")
-        
-        if not coin:
-            available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
-            coin = random.choice(available_coins if available_coins else COINS)
+        # Pick coin (avoid recently used)
+        available_coins = [c for c in COINS if c["tag"] not in recent_coins[-4:]]
+        coin = random.choice(available_coins if available_coins else COINS)
 
-        # Build macro/focus headline if applicable
-        macro_headline = None
-        if post_type["name"] == "news_reaction":
-            try:
-                news_list = fetch_cryptopanic_news()
-                if news_list and isinstance(news_list, list):
-                    macro_headline = get_macro_regulatory_headline(news_list)
-            except Exception as e:
-                log.warning(f"Error scanning for macro headline: {e}")
-        elif post_type["name"] == "whale_flow_alerts":
-            wf = fetch_whale_flow_metrics()
-            category = random.choice(["burn_rates", "etf_flows", "wallet_actions"])
-            if category == "wallet_actions":
-                macro_headline = random.choice(wf["wallet_actions"])
-            elif category == "etf_flows":
-                sym = coin["symbol"].upper()
-                macro_headline = wf["etf_flows"].get(sym, random.choice(list(wf["etf_flows"].values())))
-            else:
-                sym = coin["symbol"].upper()
-                macro_headline = wf["burn_rates"].get(sym, random.choice(list(wf["burn_rates"].values())))
+        macro_headline = None  # not used in new templates
 
-        log.info(f"🤖 Manual trigger: Generating [{post_type['name']}] post about {coin['tag']}...")
-        
+        log.info(f"🤖 Manual trigger: Generating [{post_type_name}] post about {coin['tag']}...")
+
         # Build live data block for this specific coin
         live_data_block = format_coin_data(coin, live_data.get("market", {}), fetcher, live_data)
-        
+
         content = None
         failed_keys_count = 0
         max_attempts = len(GEMINI_API_KEYS)
         while failed_keys_count < max_attempts:
             try:
                 current_client = rotator.get_client()
-                content = generate_post(current_client, post_type, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
+                content = generate_post(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
                 break
             except Exception as e:
                 log.error(f"   Manual trigger Gemini error on key index {rotator.current_index}: {e}")
@@ -3110,7 +3034,7 @@ def api_post_now():
                     # Fallback to Gemma 4
                     try:
                         log.info("   Manual trigger falling back to Gemma 4 for content generation...")
-                        content = generate_post_with_gemma(current_client, post_type, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
+                        content = generate_post_with_gemma(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
                     except Exception as g_err:
                         log.error(f"   Manual trigger Gemma 4 fallback failed: {g_err}")
                         raise e
@@ -3123,6 +3047,20 @@ def api_post_now():
         if not content:
             raise ValueError("Sanitized post content is empty.")
 
+        # Append {future} widget — required for every post
+        content = append_widget(content, coin, post_type_name)
+
+        # Verification: ensure {future} widget is present
+        if "{future}" not in content:
+            log.warning(f"   ⚠️ Widget missing! Force-appending widget for {coin['symbol']}.")
+            content = content.rstrip() + f"\n{{future}}({coin['symbol']}USDT)"
+
+        # Verification: ensure zero hashtags
+        import re as _re2
+        if _re2.search(r'#\w+', content):
+            log.warning("   ⚠️ Hashtag detected — stripping before post.")
+            content = _re2.sub(r'#\w+', '', content).strip()
+
         # Fetch klines for image generation
         klines = fetcher.fetch_klines(coin["symbol"])
 
@@ -3131,22 +3069,22 @@ def api_post_now():
         try:
             image_bytes = None
             uploader = ImageUploader(BINANCE_SQUARE_KEY)
-            
+
             # Technical post types: generate Matplotlib chart
-            technical_types = {"targets_and_signals"}
-            if post_type["name"] in technical_types:
-                log.info(f"   📊 Technical post type detected. Generating advanced chart for {coin['symbol']}...")
+            technical_types = {"long_signal", "short_signal", "scenario_analysis"}
+            if post_type_name in technical_types:
+                log.info(f"   📊 Signal post detected. Generating advanced chart for {coin['symbol']}...")
                 image_bytes = generate_advanced_chart(coin["symbol"], klines)
             else:
-                # News / trending post types: try to search the web first
-                log.info(f"   🔍 News/trending post type detected. Searching web for {coin['symbol']} image...")
+                # Narrative / thuchoang posts: try to search the web first
+                log.info(f"   🔍 Narrative post — searching web for {coin['symbol']} image...")
                 search_topic = f"{coin['tag']} price action and news"
                 image_bytes = retrieve_search_image(rotator, coin["symbol"], search_topic)
-                
+
                 if not image_bytes:
                     log.info("   ⚠️ Web search image failed or returned no result. Falling back to generating a chart...")
                     image_bytes = generate_advanced_chart(coin["symbol"], klines)
-            
+
             if image_bytes:
                 cdn_url = uploader.upload(image_bytes)
                 if cdn_url:
@@ -3160,29 +3098,29 @@ def api_post_now():
         if result.get("code") == "000000":
             post_id = result.get("data", {}).get("id", "unknown")
             post_url = f"https://www.binance.com/square/post/{post_id}"
-            
+
             with state_lock:
                 recent_coins.append(coin["tag"])
-                recent_types.append(post_type["name"])
+                recent_types.append(post_type_name)
                 if len(recent_coins) > 10:
                     recent_coins.pop(0)
                 if len(recent_types) > 6:
                     recent_types.pop(0)
-                    
+
                 bot_state["posts_published"] += 1
-            add_recent_post(post_type["name"], content, "Success", post_url)
+            add_recent_post(post_type_name, content, "Success", post_url)
             save_bot_state()
-            
+
             log.info(f"   ✅ Manual success! Post → {post_url}")
             return jsonify({"success": True, "url": post_url, "content": content})
         else:
             error_code = result.get("code", "unknown")
             error_msg = result.get("message", "no message")
             log.warning(f"   ⚠️ Manual trigger rejected. Code: {error_code} | {error_msg}")
-            
+
             with state_lock:
                 bot_state["posts_failed"] += 1
-            add_recent_post(post_type["name"], content[:80] + "...", f"Rejected ({error_code})", "#")
+            add_recent_post(post_type_name, content[:80] + "...", f"Rejected ({error_code})", "#")
             save_bot_state()
                     
             return jsonify({"success": False, "error": f"Binance error {error_code}: {error_msg}"}), 400

@@ -1,371 +1,432 @@
 {
   "start_time": "2026-06-27 11:43:31 PM IST",
-  "posts_published": 33,
+  "posts_published": 2,
   "posts_failed": 0,
-  "n_posts_scheduled": 51,
+  "n_posts_scheduled": 60,
   "schedule": [
     {
-      "coin": "$ADA",
+      "time": "04:57 PM IST",
+      "time_iso": "2026-07-18T16:57:04.288350",
       "status": "Published",
-      "time": "11:54 AM IST",
-      "time_iso": "2026-07-06T11:54:11.227657",
-      "type": "dip_entry"
-    },
-    {
-      "coin": "$LINK",
-      "status": "Published",
-      "time": "12:02 PM IST",
-      "time_iso": "2026-07-06T12:02:44.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$LINK",
-      "status": "Published",
-      "time": "12:13 PM IST",
-      "time_iso": "2026-07-06T12:13:43.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$SOL",
-      "status": "Published",
-      "time": "12:22 PM IST",
-      "time_iso": "2026-07-06T12:22:52.227657",
-      "type": "news_reaction"
-    },
-    {
       "coin": "$BTC",
-      "status": "Published",
-      "time": "12:27 PM IST",
-      "time_iso": "2026-07-06T12:27:11.227657",
-      "type": "news_reaction"
+      "type": "quick_narrative"
     },
     {
-      "coin": "$BTC",
-      "status": "Published",
-      "time": "01:31 PM IST",
-      "time_iso": "2026-07-06T13:31:12.227657",
-      "type": "news_reaction"
+      "time": "05:43 PM IST",
+      "time_iso": "2026-07-18T17:43:37.373069",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
     },
     {
-      "coin": "$ETH",
-      "status": "Published",
-      "time": "02:11 PM IST",
-      "time_iso": "2026-07-06T14:11:16.227657",
-      "type": "news_reaction"
+      "time": "05:50 PM IST",
+      "time_iso": "2026-07-18T17:50:21.886679",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
     },
     {
-      "coin": "$TIA",
-      "status": "Published",
-      "time": "02:16 PM IST",
-      "time_iso": "2026-07-06T14:16:05.227657",
-      "type": "price_target"
+      "time": "05:58 PM IST",
+      "time_iso": "2026-07-18T17:58:50.628233",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$NEAR",
-      "status": "Published",
-      "time": "02:17 PM IST",
-      "time_iso": "2026-07-06T14:17:59.227657",
-      "type": "dark_humor_take"
+      "time": "06:29 PM IST",
+      "time_iso": "2026-07-18T18:29:53.207569",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
     },
     {
-      "coin": "$ETH",
-      "status": "Published",
-      "time": "02:19 PM IST",
-      "time_iso": "2026-07-06T14:19:16.227657",
-      "type": "news_reaction"
+      "time": "06:32 PM IST",
+      "time_iso": "2026-07-18T18:32:50.641559",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$WIF",
-      "status": "Published",
-      "time": "02:19 PM IST",
-      "time_iso": "2026-07-06T14:19:33.227657",
-      "type": "entry_signal"
+      "time": "07:21 PM IST",
+      "time_iso": "2026-07-18T19:21:08.821081",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
     },
     {
-      "coin": "$OP",
-      "status": "Published",
-      "time": "03:26 PM IST",
-      "time_iso": "2026-07-06T15:26:49.227657",
-      "type": "news_reaction"
+      "time": "07:24 PM IST",
+      "time_iso": "2026-07-18T19:24:19.505432",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
     },
     {
-      "coin": "$FTM",
-      "status": "Published",
-      "time": "03:54 PM IST",
-      "time_iso": "2026-07-06T15:54:12.227657",
-      "type": "community_hold"
+      "time": "07:50 PM IST",
+      "time_iso": "2026-07-18T19:50:44.480452",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$ADA",
-      "status": "Published",
-      "time": "04:01 PM IST",
-      "time_iso": "2026-07-06T16:01:49.227657",
-      "type": "entry_signal"
+      "time": "08:32 PM IST",
+      "time_iso": "2026-07-18T20:32:16.122065",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$ETH",
-      "status": "Published",
-      "time": "04:06 PM IST",
-      "time_iso": "2026-07-06T16:06:16.227657",
-      "type": "news_reaction"
+      "time": "08:44 PM IST",
+      "time_iso": "2026-07-18T20:44:54.828417",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$SOL",
-      "status": "Published",
-      "time": "04:36 PM IST",
-      "time_iso": "2026-07-06T16:36:44.227657",
-      "type": "trending_coin_take"
+      "time": "09:27 PM IST",
+      "time_iso": "2026-07-18T21:27:21.749328",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
     },
     {
-      "coin": "$XRP",
-      "status": "Published",
-      "time": "04:56 PM IST",
-      "time_iso": "2026-07-06T16:56:00.227657",
-      "type": "news_reaction"
+      "time": "09:28 PM IST",
+      "time_iso": "2026-07-18T21:28:11.638122",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "$DOT",
-      "status": "Published",
-      "time": "05:18 PM IST",
-      "time_iso": "2026-07-06T17:18:10.227657",
-      "type": "price_target"
-    },
-    {
-      "coin": "$NEAR",
-      "status": "Published",
-      "time": "05:45 PM IST",
-      "time_iso": "2026-07-06T17:45:03.227657",
-      "type": "bearish_warning"
-    },
-    {
-      "coin": "$TIA",
-      "status": "Published",
-      "time": "05:57 PM IST",
-      "time_iso": "2026-07-06T17:57:57.227657",
-      "type": "dip_entry"
-    },
-    {
-      "coin": "$BTC",
-      "status": "Published",
-      "time": "06:12 PM IST",
-      "time_iso": "2026-07-06T18:12:22.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$OP",
-      "status": "Published",
-      "time": "06:19 PM IST",
-      "time_iso": "2026-07-06T18:19:25.227657",
-      "type": "entry_signal"
-    },
-    {
-      "coin": "$INJ",
-      "status": "Published",
-      "time": "06:47 PM IST",
-      "time_iso": "2026-07-06T18:47:28.227657",
-      "type": "community_hold"
-    },
-    {
-      "coin": "$SUI",
-      "status": "Generating",
-      "time": "07:09 PM IST",
-      "time_iso": "2026-07-06T19:09:56.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$BNB",
-      "status": "Generating",
-      "time": "07:14 PM IST",
-      "time_iso": "2026-07-06T19:14:23.227657",
-      "type": "targets_and_signals"
-    },
-    {
-      "coin": "$XRP",
-      "status": "Published",
-      "time": "08:09 PM IST",
-      "time_iso": "2026-07-06T20:09:48.227657",
-      "type": "dark_humor_take"
-    },
-    {
-      "coin": "$WIF",
-      "status": "Published",
       "time": "09:31 PM IST",
-      "time_iso": "2026-07-06T21:31:34.227657",
-      "type": "targets_and_signals"
-    },
-    {
-      "coin": "$BNB",
-      "status": "Published",
-      "time": "09:43 PM IST",
-      "time_iso": "2026-07-06T21:43:19.227657",
-      "type": "dark_humor_take"
-    },
-    {
-      "coin": "$SOL",
-      "status": "Published",
-      "time": "09:44 PM IST",
-      "time_iso": "2026-07-06T21:44:37.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$INJ",
-      "status": "Published",
-      "time": "09:51 PM IST",
-      "time_iso": "2026-07-06T21:51:33.227657",
-      "type": "trending_coin_take"
-    },
-    {
-      "coin": "$SOL",
-      "status": "Published",
-      "time": "10:49 PM IST",
-      "time_iso": "2026-07-06T22:49:38.227657",
-      "type": "news_reaction"
-    },
-    {
-      "coin": "$WIF",
-      "status": "Published",
-      "time": "11:21 PM IST",
-      "time_iso": "2026-07-06T23:21:42.227657",
-      "type": "dark_humor_take"
-    },
-    {
-      "coin": "$INJ",
-      "status": "Published",
-      "time": "11:22 PM IST",
-      "time_iso": "2026-07-06T23:22:18.227657",
-      "type": "trending_coin_take"
-    },
-    {
-      "coin": "$INJ",
-      "status": "Published",
-      "time": "11:31 PM IST",
-      "time_iso": "2026-07-06T23:31:36.227657",
-      "type": "trending_coin_take"
-    },
-    {
-      "coin": "$APT",
-      "status": "Published",
-      "time": "11:52 PM IST",
-      "time_iso": "2026-07-06T23:52:23.227657",
-      "type": "dark_humor_take"
-    },
-    {
-      "coin": "Pending",
+      "time_iso": "2026-07-18T21:31:10.309225",
       "status": "Pending",
-      "time": "12:56 AM IST",
-      "time_iso": "2026-07-07T00:56:46.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "Pending",
+      "time": "10:09 PM IST",
+      "time_iso": "2026-07-18T22:09:37.424363",
       "status": "Pending",
-      "time": "01:36 AM IST",
-      "time_iso": "2026-07-07T01:36:41.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "Pending",
+      "time": "10:22 PM IST",
+      "time_iso": "2026-07-18T22:22:22.585391",
       "status": "Pending",
-      "time": "01:46 AM IST",
-      "time_iso": "2026-07-07T01:46:29.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "Pending",
+      "time": "10:23 PM IST",
+      "time_iso": "2026-07-18T22:23:01.831728",
       "status": "Pending",
-      "time": "01:57 AM IST",
-      "time_iso": "2026-07-07T01:57:47.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "Pending",
+      "time": "11:30 PM IST",
+      "time_iso": "2026-07-18T23:30:52.016966",
       "status": "Pending",
-      "time": "02:21 AM IST",
-      "time_iso": "2026-07-07T02:21:54.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "scenario_analysis"
     },
     {
-      "coin": "Pending",
+      "time": "11:34 PM IST",
+      "time_iso": "2026-07-18T23:34:33.129225",
       "status": "Pending",
-      "time": "02:30 AM IST",
-      "time_iso": "2026-07-07T02:30:25.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "long_signal"
     },
     {
-      "coin": "Pending",
+      "time": "11:51 PM IST",
+      "time_iso": "2026-07-18T23:51:30.593217",
       "status": "Pending",
-      "time": "02:42 AM IST",
-      "time_iso": "2026-07-07T02:42:08.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "short_signal"
     },
     {
-      "coin": "Pending",
+      "time": "12:04 AM IST",
+      "time_iso": "2026-07-19T00:04:08.570548",
       "status": "Pending",
-      "time": "02:47 AM IST",
-      "time_iso": "2026-07-07T02:47:26.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "thuchoang_style"
     },
     {
-      "coin": "Pending",
+      "time": "12:50 AM IST",
+      "time_iso": "2026-07-19T00:50:36.163952",
       "status": "Pending",
-      "time": "02:57 AM IST",
-      "time_iso": "2026-07-07T02:57:32.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "long_signal"
     },
     {
-      "coin": "Pending",
+      "time": "01:19 AM IST",
+      "time_iso": "2026-07-19T01:19:57.581660",
       "status": "Pending",
-      "time": "03:38 AM IST",
-      "time_iso": "2026-07-07T03:38:15.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "thuchoang_style"
     },
     {
-      "coin": "Pending",
+      "time": "02:52 AM IST",
+      "time_iso": "2026-07-19T02:52:35.935935",
       "status": "Pending",
-      "time": "04:40 AM IST",
-      "time_iso": "2026-07-07T04:40:38.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "short_signal"
     },
     {
-      "coin": "Pending",
+      "time": "02:59 AM IST",
+      "time_iso": "2026-07-19T02:59:24.297350",
       "status": "Pending",
-      "time": "05:07 AM IST",
-      "time_iso": "2026-07-07T05:07:30.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "long_signal"
     },
     {
-      "coin": "Pending",
+      "time": "03:14 AM IST",
+      "time_iso": "2026-07-19T03:14:10.154543",
       "status": "Pending",
-      "time": "06:00 AM IST",
-      "time_iso": "2026-07-07T06:00:15.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "long_signal"
     },
     {
-      "coin": "Pending",
+      "time": "04:42 AM IST",
+      "time_iso": "2026-07-19T04:42:45.960360",
       "status": "Pending",
-      "time": "06:00 AM IST",
-      "time_iso": "2026-07-07T06:00:30.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "scenario_analysis"
     },
     {
-      "coin": "Pending",
+      "time": "04:46 AM IST",
+      "time_iso": "2026-07-19T04:46:08.072117",
       "status": "Pending",
-      "time": "06:01 AM IST",
-      "time_iso": "2026-07-07T06:01:06.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
     },
     {
-      "coin": "Pending",
+      "time": "04:47 AM IST",
+      "time_iso": "2026-07-19T04:47:20.124457",
       "status": "Pending",
-      "time": "07:08 AM IST",
-      "time_iso": "2026-07-07T07:08:41.227657",
-      "type": "Pending"
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "04:59 AM IST",
+      "time_iso": "2026-07-19T04:59:53.997147",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "05:21 AM IST",
+      "time_iso": "2026-07-19T05:21:17.443388",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "05:23 AM IST",
+      "time_iso": "2026-07-19T05:23:47.899532",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "05:59 AM IST",
+      "time_iso": "2026-07-19T05:59:37.346072",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:04 AM IST",
+      "time_iso": "2026-07-19T06:04:57",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
+    },
+    {
+      "time": "06:11 AM IST",
+      "time_iso": "2026-07-19T06:11:05",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:19 AM IST",
+      "time_iso": "2026-07-19T06:19:42",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:20 AM IST",
+      "time_iso": "2026-07-19T06:20:26",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "06:20 AM IST",
+      "time_iso": "2026-07-19T06:20:50",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:37 AM IST",
+      "time_iso": "2026-07-19T06:37:00",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:40 AM IST",
+      "time_iso": "2026-07-19T06:40:56",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:44 AM IST",
+      "time_iso": "2026-07-19T06:44:41",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:47 AM IST",
+      "time_iso": "2026-07-19T06:47:57",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "06:51 AM IST",
+      "time_iso": "2026-07-19T06:51:56",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "06:52 AM IST",
+      "time_iso": "2026-07-19T06:52:54",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:03 AM IST",
+      "time_iso": "2026-07-19T07:03:12",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "07:12 AM IST",
+      "time_iso": "2026-07-19T07:12:24",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "07:15 AM IST",
+      "time_iso": "2026-07-19T07:15:47",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "07:23 AM IST",
+      "time_iso": "2026-07-19T07:23:47",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:50 AM IST",
+      "time_iso": "2026-07-19T07:50:03",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
+    },
+    {
+      "time": "07:51 AM IST",
+      "time_iso": "2026-07-19T07:51:52",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "07:54 AM IST",
+      "time_iso": "2026-07-19T07:54:50",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:56 AM IST",
+      "time_iso": "2026-07-19T07:56:21",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "08:01 AM IST",
+      "time_iso": "2026-07-19T08:01:32.893215",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "08:28 AM IST",
+      "time_iso": "2026-07-19T08:28:28.953290",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "08:42 AM IST",
+      "time_iso": "2026-07-19T08:42:21.287497",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "08:58 AM IST",
+      "time_iso": "2026-07-19T08:58:35.447803",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "09:30 AM IST",
+      "time_iso": "2026-07-19T09:30:00.980070",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "09:35 AM IST",
+      "time_iso": "2026-07-19T09:35:31.572054",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "09:38 AM IST",
+      "time_iso": "2026-07-19T09:38:30.792368",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "09:50 AM IST",
+      "time_iso": "2026-07-19T09:50:54.717569",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
     }
   ],
   "recent_posts": [],
   "recent_coins": [
-    "$XRP",
-    "$WIF",
     "$BNB",
     "$SOL",
     "$INJ",
@@ -373,16 +434,18 @@
     "$WIF",
     "$INJ",
     "$INJ",
-    "$APT"
+    "$APT",
+    "$DOT",
+    "$BTC"
   ],
   "recent_types": [
-    "trending_coin_take",
-    "news_reaction",
     "dark_humor_take",
     "trending_coin_take",
     "trending_coin_take",
-    "dark_humor_take"
+    "dark_humor_take",
+    "thuchoang_style",
+    "quick_narrative"
   ],
   "error_message": null,
-  "status": "Posting post 35/51 to Binance..."
+  "status": "Posting post 1/60 to Binance..."
 }
