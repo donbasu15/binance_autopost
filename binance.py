@@ -528,9 +528,9 @@ FORMATTING RULES:
 # Weighted post type mix matching top earner ratios
 POST_MIX = {
     "quick_narrative":   40,   # most common — 40% of posts
-    "long_signal":       20,   # full signal long
+    "long_signal":       10,   # full signal long
     "short_signal":      15,   # full signal short
-    "thuchoang_style":   15,   # dual-widget casual style
+    "thuchoang_style":   25,   # dual-widget casual style
     "scenario_analysis": 10,   # bull/bear layout
 }
 
@@ -602,9 +602,9 @@ def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> lis
     Structures the programmatic daily posting output based on POST_MIX weights
     derived from analysis of top Binance Square commission-earning profiles:
       - quick_narrative:   40%
-      - long_signal:       20%
+      - long_signal:       10%
       - short_signal:      15%
-      - thuchoang_style:   15%
+      - thuchoang_style:   25%
       - scenario_analysis: 10%
     The low_sentiment parameter is accepted for compatibility but no longer changes the mix.
     """
