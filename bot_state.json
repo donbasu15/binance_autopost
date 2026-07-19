@@ -1,28 +1,28 @@
 {
   "start_time": "2026-07-19 08:08:06 AM IST",
-  "posts_published": 0,
+  "posts_published": 2,
   "posts_failed": 0,
   "n_posts_scheduled": 6,
   "schedule": [
     {
       "time": "08:20 AM IST",
       "time_iso": "2026-07-19T08:20:39.350437",
-      "status": "Pending",
-      "coin": "Pending",
+      "status": "Published",
+      "coin": "$XRP",
       "type": "scenario_analysis"
     },
     {
       "time": "09:05 AM IST",
       "time_iso": "2026-07-19T09:05:20",
-      "status": "Pending",
-      "coin": "Pending",
+      "status": "Published",
+      "coin": "$INJ",
       "type": "long_signal"
     },
     {
       "time": "09:14 AM IST",
       "time_iso": "2026-07-19T09:14:36",
-      "status": "Pending",
-      "coin": "Pending",
+      "status": "Generating",
+      "coin": "$FTM",
       "type": "thuchoang_style"
     },
     {
@@ -48,8 +48,14 @@
     }
   ],
   "recent_posts": [],
-  "recent_coins": [],
-  "recent_types": [],
+  "recent_coins": [
+    "$XRP",
+    "$INJ"
+  ],
+  "recent_types": [
+    "scenario_analysis",
+    "long_signal"
+  ],
   "error_message": null,
-  "status": "Starting up"
+  "status": "Posting post 2/6 to Binance..."
 }

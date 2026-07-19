@@ -434,7 +434,7 @@ FORMATTING RULES:
 
 "long_signal": """
 Write a LONG SIGNAL post (Template B). Structure:
-- Line 1: 🚀 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
+- Line 1: 🚀 [verb phrase(Opening LONG/BULLISH)] $COIN — Nx Leverage  (use 10x or 20x)
 - Blank line
 - "Entry: [price derived from live data — use current price ±1-2%]"
 - Blank line
@@ -458,7 +458,7 @@ FORMATTING RULES:
 
 "short_signal": """
 Write a SHORT SIGNAL post (Template C). Structure:
-- Line 1: 🩸 [verb phrase] $COIN — Nx Leverage  (use 10x or 20x)
+- Line 1: 🩸 [verb phrase(Opening SHORT/BEARISH)] $COIN — Nx Leverage  (use 10x or 20x)
 - Blank line
 - "Entry: [price — at or slightly above current price]"
 - "SL: [price — 3-5% above entry]"
@@ -523,15 +523,43 @@ FORMATTING RULES:
 - Absolutely NO hashtags.
 - DO NOT write {future} or {spot} tags.
 """,
+
+"news_reaction": """
+Write a NEWS REACTION post (Template F). A breaking price-move catalyst was just spotted.
+You are reacting to it in real-time as a trader — opinionated, first-person, punchy.
+
+Structure:
+- Line 1: [emoji] [one sharp reaction sentence referencing the news headline and coin — e.g. "$SOL just ripped 8% on the ETF approval — this changes the chart."]
+- Blank line
+- [1-2 lines: what the move means technically — key level broken/held, next resistance/support — use ACTUAL prices from live data]
+- Blank line
+- Your personal play:
+  "Entry: [price ±1%]"
+  "SL: [price — 4-6% away]"
+  "TP: [price — 7-10% away]"
+- Blank line
+- [1 line: risk caveat — e.g. "News moves fade fast. Size small."]
+- Blank line
+- "Trade Here 👇🏻"
+
+FORMATTING RULES:
+- SL and TP MUST each start on their own line (no blank line between them).
+- Entry MUST start on its own line.
+- Max 300 chars.
+- Absolutely NO hashtags.
+- DO NOT write {future} or {spot} tags.
+- The news headline driving this post: {NEWS_HEADLINE}
+""",
 }
 
 # Weighted post type mix matching top earner ratios
 POST_MIX = {
-    "quick_narrative":   40,   # most common — 40% of posts
+    "quick_narrative":   35,   # most common — narrative takes
     "long_signal":       10,   # full signal long
     "short_signal":      15,   # full signal short
     "thuchoang_style":   25,   # dual-widget casual style
     "scenario_analysis": 10,   # bull/bear layout
+    "news_reaction":      5,   # triggered by 5-10%+ price-move headlines
 }
 
 # Secondary coins rotation for thuchoang_style dual-widget posts
@@ -540,8 +568,13 @@ SECONDARY_COINS = ["TRADOORUSDT", "AKEUSDT", "ESPORTSUSDT", "SKHYUSDT"]
 # Legacy POST_TYPES list kept for non-signal post_type lookups (will not be used for content generation)
 POST_TYPES = []
 
-def _select_signal(rsi, macd, boll, vol) -> str:
-    """Map technical indicators to the best post template."""
+def _select_signal(rsi, macd, boll, vol, news_list: list = None) -> str:
+    """Map technical indicators (and live news) to the best post template."""
+    # News-driven: a 5-10%+ move headline overrides TA templates
+    if news_list:
+        move_headline = get_price_move_headline(news_list, threshold_pct=5.0)
+        if move_headline:
+            return "news_reaction"
     if rsi is not None and rsi < 30:
         return "long_signal"        # oversold → long signal
     if rsi is not None and rsi > 70:
@@ -596,6 +629,37 @@ def get_macro_regulatory_headline(news_list: list) -> str | None:
     # Fallback to first headline
     first_title = news_list[0].get("title", "")
     return sanitize_text_token(first_title) if first_title else None
+
+
+def get_price_move_headline(news_list: list, threshold_pct: float = 5.0) -> str | None:
+    """
+    Scans news headlines for a significant price move (>= threshold_pct %).
+    Returns the cleaned headline text if found, else None.
+    Examples matched: "SOL surges 8%", "BTC drops 11%", "ETH rises 6.4%"
+    """
+    import re
+    if not news_list or not isinstance(news_list, list):
+        return None
+    # Pattern: a number (possibly decimal) followed by %
+    pct_pattern = re.compile(r'(\d+(?:\.\d+)?)\s*%')
+    move_words = re.compile(
+        r'\b(surges?|soars?|spikes?|jumps?|rallies?|rises?|climbs?|dumps?|drops?|falls?|crashes?|plunges?|dips?)\b',
+        re.IGNORECASE
+    )
+    for item in news_list:
+        title = item.get("title", "")
+        if not title:
+            continue
+        # Must contain both a move verb and a percentage figure
+        pct_match = pct_pattern.search(title)
+        if not pct_match:
+            continue
+        pct_value = float(pct_match.group(1))
+        if pct_value < threshold_pct:
+            continue
+        if move_words.search(title):
+            return sanitize_text_token(title)
+    return None
 
 def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> list[str]:
     """
@@ -860,12 +924,14 @@ def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dic
         r'(TP2\s*:)',
         r'(TP3\s*:)',
         r'(TP4\s*:)',
-        r'(Target\s)',
+        r'(Target\s*:)',
         r'(RSI\s)',
         r'(EMA\s)',
     ]
     for pattern in force_single_newline_before:
-        content = re.sub(r'[ \t]*' + pattern, r'\n\1', content)
+        # Consume ALL preceding whitespace (newlines included) so Gemini's \n\n
+        # doesn't stack with our added \n and produce a blank line.
+        content = re.sub(r'[\n\r]*[ \t]*' + pattern, r'\n\1', content)
 
     # ── 4. Strip trailing spaces from every line ──
     lines = [line.rstrip() for line in content.splitlines()]
