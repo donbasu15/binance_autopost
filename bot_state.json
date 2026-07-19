@@ -1,0 +1,55 @@
+{
+  "start_time": "2026-07-19 08:08:06 AM IST",
+  "posts_published": 0,
+  "posts_failed": 0,
+  "n_posts_scheduled": 6,
+  "schedule": [
+    {
+      "time": "08:20 AM IST",
+      "time_iso": "2026-07-19T08:20:39.350437",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
+    },
+    {
+      "time": "09:05 AM IST",
+      "time_iso": "2026-07-19T09:05:20",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "long_signal"
+    },
+    {
+      "time": "09:14 AM IST",
+      "time_iso": "2026-07-19T09:14:36",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "09:43 AM IST",
+      "time_iso": "2026-07-19T09:43:26",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "09:52 AM IST",
+      "time_iso": "2026-07-19T09:52:22",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "short_signal"
+    },
+    {
+      "time": "09:54 AM IST",
+      "time_iso": "2026-07-19T09:54:37",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    }
+  ],
+  "recent_posts": [],
+  "recent_coins": [],
+  "recent_types": [],
+  "error_message": null,
+  "status": "Starting up"
+}

@@ -839,25 +839,33 @@ def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dic
     content = re.sub(r'\{spot\}\s*\(?\w*\)?', '', content)
 
     # ── 3. Force line breaks before key signal keywords ──
-    # These should ALWAYS start on their own line
-    force_newline_before = [
+    # Section-level breaks (double \n) — these open a new thought / block
+    force_double_newline_before = [
         r'(Entry\s*:)',
         r'(Be careful\s*:)',
         r'(Never all-in)',
-        r'(Target\s)',
-        r'(SL\s:)',
-        r'(TP1\s:)',
-        r'(TP2\s:)',
-        r'(TP3\s:)',
-        r'(TP4\s:)',
-        r'(RSI\s:)',
-        r'(EMA\s:)',
+        r'(Trade\sHere)',
         r'(🟢\s*Bull)',
         r'(🔴\s*Bear)',
-        r'(‼️\s*Risk)'
+        r'(‼️\s*Risk)',
     ]
-    for pattern in force_newline_before:
+    for pattern in force_double_newline_before:
         content = re.sub(r'[ \t]*' + pattern, r'\n\n\1', content)
+
+    # Inline signal lines (single \n) — stay grouped in the same trade block
+    force_single_newline_before = [
+        r'(SL\s*:?)',
+        r'(TP\s*:?)',
+        r'(TP1\s*:)',
+        r'(TP2\s*:)',
+        r'(TP3\s*:)',
+        r'(TP4\s*:)',
+        r'(Target\s)',
+        r'(RSI\s)',
+        r'(EMA\s)',
+    ]
+    for pattern in force_single_newline_before:
+        content = re.sub(r'[ \t]*' + pattern, r'\n\1', content)
 
     # ── 4. Strip trailing spaces from every line ──
     lines = [line.rstrip() for line in content.splitlines()]
@@ -884,7 +892,7 @@ def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dic
     secondary_tag = "$" + secondary_sym.replace("USDT", "")
     
     # Append secondary tag text to the content as requested
-    text = text.rstrip() + f"\n\n${coin["symbol"]}" +f"\n\n{secondary_tag}\n"
+    text = text.rstrip() + f"\n${coin["symbol"]}" +f"\n\n{secondary_tag}\n"
     
     widgets.append({
         "type": "candle_chart",
