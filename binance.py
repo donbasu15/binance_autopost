@@ -717,7 +717,7 @@ COINS = [
     {"tag": "$LINK",  "cg_id": "chainlink",       "symbol": "LINK"},
     {"tag": "$ARB",   "cg_id": "arbitrum",        "symbol": "ARB"},
     {"tag": "$OP",    "cg_id": "optimism",        "symbol": "OP"},
-    {"tag": "$MATIC", "cg_id": "matic-network",   "symbol": "MATIC"},
+    # {"tag": "$MATIC", "cg_id": "matic-network",   "symbol": "MATIC"},
     {"tag": "$DOGE",  "cg_id": "dogecoin",        "symbol": "DOGE"},
     {"tag": "$DOT",   "cg_id": "polkadot",        "symbol": "DOT"},
     {"tag": "$ADA",   "cg_id": "cardano",         "symbol": "ADA"},
@@ -729,7 +729,7 @@ COINS = [
     {"tag": "$WIF",   "cg_id": "dogwifcoin",      "symbol": "WIF"},
     {"tag": "$PEPE",  "cg_id": "pepe",            "symbol": "PEPE"},
     {"tag": "$NEAR",  "cg_id": "near",            "symbol": "NEAR"},
-    {"tag": "$FTM",   "cg_id": "fantom",          "symbol": "FTM"},
+    #{"tag": "$FTM",   "cg_id": "fantom",          "symbol": "FTM"},
     {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
 ]
 
@@ -960,14 +960,14 @@ def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dic
     text = '\n'.join(cleaned).strip()
 
     # ── 6. Build widget block (updated for widgets API) ──
-    main_sym = coin["symbol"] + "USDT"  # e.g. "DOTUSDT"
+    main_sym = coin["symbol"] + "USDT "  # e.g. "DOTUSDT"
     widgets = []
 
     secondary_sym = random.choice(SECONDARY_COINS)
     secondary_tag = "$" + secondary_sym.replace("USDT", "")
     
     # Append secondary tag text to the content as requested
-    text = text.rstrip() + f"\n${coin["symbol"]}" +f"\n\n{secondary_tag}\n"
+    text = text.rstrip() + f"\n${coin["symbol"]} " +f"\n\n{secondary_tag}\n"
     
     widgets.append({
         "type": "candle_chart",
