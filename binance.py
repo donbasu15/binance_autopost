@@ -563,12 +563,12 @@ FORMATTING RULES:
 
 # Weighted post type mix matching top earner ratios
 POST_MIX = {
-    "quick_narrative":   35,   # most common — narrative takes
+    "quick_narrative":   25,   # most common — narrative takes
     "long_signal":       10,   # full signal long
     "short_signal":      15,   # full signal short
     "thuchoang_style":   25,   # dual-widget casual style
     "scenario_analysis": 10,   # bull/bear layout
-    "news_reaction":      5,   # triggered by 5-10%+ price-move headlines
+    "news_reaction":     15,   # triggered by 5-10%+ price-move headlines
 }
 
 # Secondary coins rotation for thuchoang_style dual-widget posts
