@@ -46,13 +46,22 @@ load_dotenv()
 GEMINI_API_KEY        = os.getenv("GEMINI_API_KEY")
 GEMINI_API_KEYS_STR   = os.getenv("GEMINI_API_KEYS", "")
 
-# Parse multiple keys; fall back to GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3 etc.
+# GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, … with no upper limit.
 GEMINI_API_KEYS = [k.strip() for k in GEMINI_API_KEYS_STR.split(",") if k.strip()]
 if not GEMINI_API_KEYS:
-    for suffix in ["", "_2", "_3"]:
-        key = os.getenv(f"GEMINI_API_KEY{suffix}")
-        if key:
-            GEMINI_API_KEYS.append(key.strip())
+    # Always try the bare key first
+    _base = os.getenv("GEMINI_API_KEY")
+    if _base:
+        GEMINI_API_KEYS.append(_base.strip())
+    # Then scan _2, _3, _4 … stopping at the first gap
+    _n = 2
+    while True:
+        _key = os.getenv(f"GEMINI_API_KEY_{_n}")
+        if not _key:
+            break
+        GEMINI_API_KEYS.append(_key.strip())
+        _n += 1
+
 
 BINANCE_SQUARE_KEY    = os.getenv("BINANCE_SQUARE_KEY")
 STATE_SERVER_URL      = os.getenv("STATE_SERVER_URL")

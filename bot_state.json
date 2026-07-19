@@ -1,61 +1,20 @@
 {
-  "start_time": "2026-07-19 08:08:06 AM IST",
-  "posts_published": 2,
+  "start_time": "2026-07-19 09:57:10 AM IST",
+  "posts_published": 1,
   "posts_failed": 0,
-  "n_posts_scheduled": 6,
-  "schedule": [
-    {
-      "time": "08:20 AM IST",
-      "time_iso": "2026-07-19T08:20:39.350437",
-      "status": "Published",
-      "coin": "$XRP",
-      "type": "scenario_analysis"
-    },
-    {
-      "time": "09:05 AM IST",
-      "time_iso": "2026-07-19T09:05:20",
-      "status": "Published",
-      "coin": "$INJ",
-      "type": "long_signal"
-    },
-    {
-      "time": "09:14 AM IST",
-      "time_iso": "2026-07-19T09:14:36",
-      "status": "Generating",
-      "coin": "$FTM",
-      "type": "thuchoang_style"
-    },
-    {
-      "time": "09:43 AM IST",
-      "time_iso": "2026-07-19T09:43:26",
-      "status": "Pending",
-      "coin": "Pending",
-      "type": "thuchoang_style"
-    },
-    {
-      "time": "09:52 AM IST",
-      "time_iso": "2026-07-19T09:52:22",
-      "status": "Pending",
-      "coin": "Pending",
-      "type": "short_signal"
-    },
-    {
-      "time": "09:54 AM IST",
-      "time_iso": "2026-07-19T09:54:37",
-      "status": "Pending",
-      "coin": "Pending",
-      "type": "quick_narrative"
-    }
-  ],
+  "n_posts_scheduled": 0,
+  "schedule": [],
   "recent_posts": [],
   "recent_coins": [
-    "$XRP",
-    "$INJ"
+    "$FTM",
+    "$ARB",
+    "$BTC"
   ],
   "recent_types": [
     "scenario_analysis",
-    "long_signal"
+    "thuchoang_style",
+    "thuchoang_style"
   ],
   "error_message": null,
-  "status": "Posting post 2/6 to Binance..."
+  "status": "Sleeping until cycle start (11:30 AM IST) | IST: 10:03:53 AM (in 3h 56m)"
 }
