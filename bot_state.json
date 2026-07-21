@@ -1,0 +1,30 @@
+{
+  "start_time": "2026-07-21 12:47:54 PM IST",
+  "posts_published": 2,
+  "posts_failed": 0,
+  "n_posts_scheduled": 0,
+  "schedule": [],
+  "recent_posts": [],
+  "recent_coins": [
+    "$APT",
+    "$WIF",
+    "$DOT",
+    "$ARB",
+    "$LINK",
+    "$TIA",
+    "$AVAX",
+    "$JUP",
+    "$ATOM",
+    "$ESPORTS"
+  ],
+  "recent_types": [
+    "quick_narrative",
+    "quick_narrative",
+    "thuchoang_style",
+    "thuchoang_style",
+    "news_reaction",
+    "thuchoang_style"
+  ],
+  "error_message": null,
+  "status": "Sleeping until cycle start (11:30 AM IST) | IST: 01:39:32 PM (in 20m 27s)"
+}

@@ -79,21 +79,21 @@ BINANCE_POST_ENDPOINT = BINANCE_POST_URL
 
 DATA_REFRESH_EVERY = 2
 
-POSTS_PER_DAY_MIN = 60
-POSTS_PER_DAY_MAX = 70
+POSTS_PER_DAY_MIN = 70
+POSTS_PER_DAY_MAX = 80
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
 INTERVAL_BANDS = [
-    (60,   300),    # 1–5 min  — "just replied and posted again"
-    (300,  900),    # 5–15 min — quick follow-up
-    (900,  2700),   # 15–45 min — normal browsing gap
-    (2700, 5400),   # 45–90 min — stepped away
-    (5400, 10800),  # 90 min–3 hr — long break
+    (400,  900),    
+    (900, 1500),
+    (1500, 2000),  
+    (2000, 2700),
+    (2700, 3000), 
 ]
 
 # Weights: short gaps are common, very long gaps are rare
-INTERVAL_WEIGHTS = [15, 30, 30, 15, 10]
+INTERVAL_WEIGHTS = [20, 30, 30, 15, 5]
 
 # Thread-safe state & logging (using RLock to prevent self-deadlock on log emit)
 state_lock = threading.RLock()
@@ -561,14 +561,12 @@ FORMATTING RULES:
 """,
 }
 
-# Weighted post type mix matching top earner ratios
+# Weighted post type mix based on performance data:
 POST_MIX = {
-    "quick_narrative":   25,   # most common — narrative takes
-    "long_signal":       10,   # full signal long
-    "short_signal":      15,   # full signal short
-    "thuchoang_style":   25,   # dual-widget casual style
-    "scenario_analysis": 10,   # bull/bear layout
-    "news_reaction":     15,   # triggered by 5-10%+ price-move headlines
+    "quick_narrative":   50,   # 118 avg views — best performer
+    "news_reaction":     25,   # 105 avg views when news < 45 min old
+    "thuchoang_style":   20,   # 82 avg views — consistent
+    "scenario_analysis":  5,   # 36 avg views — keep minimal
 }
 
 # Secondary coins rotation for thuchoang_style dual-widget posts
@@ -585,13 +583,13 @@ def _select_signal(rsi, macd, boll, vol, news_list: list = None) -> str:
         if move_headline:
             return "news_reaction"
     if rsi is not None and rsi < 30:
-        return "long_signal"        # oversold → long signal
+        return "thuchoang_style"    # oversold → thuchoang_style
     if rsi is not None and rsi > 70:
-        return "short_signal"       # overbought → short signal
+        return "thuchoang_style"       # overbought → thuchoang_style
     if macd and macd.get("crossover") == "bullish":
-        return "long_signal"
+        return "thuchoang_style"
     if macd and macd.get("crossover") == "bearish":
-        return "short_signal"
+        return "thuchoang_style"
     if boll and boll.get("squeeze"):
         return "scenario_analysis"  # squeeze → both scenarios possible
     if vol and vol.get("trend") == "spike":
@@ -731,6 +729,7 @@ COINS = [
     {"tag": "$NEAR",  "cg_id": "near",            "symbol": "NEAR"},
     #{"tag": "$FTM",   "cg_id": "fantom",          "symbol": "FTM"},
     {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
+
 ]
 
 # Note: HASHTAG_POOL removed — top earners use ZERO hashtags.
@@ -967,7 +966,7 @@ def format_post(content: str, coin: dict, post_type: str) -> tuple[str, list[dic
     secondary_tag = "$" + secondary_sym.replace("USDT", "")
     
     # Append secondary tag text to the content as requested
-    text = text.rstrip() + f"\n${coin["symbol"]} " +f"\n\n{secondary_tag}\n"
+    text = text.rstrip() + f"\n${coin['symbol']} " + f"\n\n{secondary_tag} \n"
     
     widgets.append({
         "type": "candle_chart",
