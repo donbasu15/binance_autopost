@@ -79,8 +79,8 @@ BINANCE_POST_ENDPOINT = BINANCE_POST_URL
 
 DATA_REFRESH_EVERY = 2
 
-POSTS_PER_DAY_MIN = 70
-POSTS_PER_DAY_MAX = 80
+POSTS_PER_DAY_MIN = 80
+POSTS_PER_DAY_MAX = 100
 
 # Irregular interval ranges between posts (in seconds).
 # Mimics human posting patterns: short bursts + longer gaps.
@@ -669,11 +669,10 @@ def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> lis
     """
     Structures the programmatic daily posting output based on POST_MIX weights
     derived from analysis of top Binance Square commission-earning profiles:
-      - quick_narrative:   40%
-      - long_signal:       10%
-      - short_signal:      15%
-      - thuchoang_style:   25%
-      - scenario_analysis: 10%
+      - quick_narrative:   45%
+      - news_reaction:     35%
+      - thuchoang_style:   18%
+      - scenario_analysis: 2%
     The low_sentiment parameter is accepted for compatibility but no longer changes the mix.
     """
     total_weight = sum(POST_MIX.values())
@@ -1948,47 +1947,13 @@ def run_daily_session():
     base_n = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
     n_posts = max(1, int(base_n * proportion))
     
-    # Preferred IST hours — weighted toward high-engagement windows.
-    # 04-05: early Asia open | 08-10: peak morning | 19-20 & 22-23: evening/night
-    # 06-07 is intentionally absent — previously over-indexed, weakest engagement.
-    preferred_hours = [4, 5, 8, 9, 19, 20, 22, 23]  # IST hours
-
-    # Build 1-hour candidate windows that (a) fall within the remaining active
-    # window and (b) align with preferred hours. Fall back to the full remaining
-    # window if none of the preferred windows are still available.
-    today = now_ist.date()
-    candidate_windows = []
-    for h in preferred_hours:
-        win_start = datetime(today.year, today.month, today.day, h, 0, 0) + timedelta(hours=5, minutes=30) - timedelta(hours=5, minutes=30)
-        # Rebuild in IST (no tzinfo; get_ist_now() returns naive IST datetime)
-        win_start = now_ist.replace(hour=h, minute=0, second=0, microsecond=0)
-        win_end   = win_start + timedelta(hours=1)
-        # Clamp to the remaining active window
-        eff_start = max(win_start, now_ist)
-        eff_end   = min(win_end,   cycle_end)
-        if eff_end > eff_start:  # window has remaining time
-            candidate_windows.append((eff_start, eff_end))
-
-    # If no preferred windows remain, fall back to uniform distribution
-    if not candidate_windows:
-        candidate_windows = [(now_ist, cycle_end)]
-
-    # Total available seconds across all candidate windows (for weighted sampling)
-    total_candidate_seconds = sum((e - s).total_seconds() for s, e in candidate_windows)
-
-    timestamps_ist = []
-    for _ in range(n_posts):
-        r = random.uniform(0, total_candidate_seconds)
-        for win_start, win_end in candidate_windows:
-            dur = (win_end - win_start).total_seconds()
-            if r <= dur:
-                timestamps_ist.append(win_start + timedelta(seconds=random.uniform(0, dur)))
-                break
-            r -= dur
-        else:
-            # Safety fallback — should never be reached
-            timestamps_ist.append(now_ist + timedelta(seconds=random.uniform(0, (cycle_end - now_ist).total_seconds())))
-            
+    # Uniformly distribute post timestamps across the remaining active window.
+    # This avoids any preferred-hour clustering and keeps the gaps naturally random.
+    remaining_window_seconds = (cycle_end - now_ist).total_seconds()
+    timestamps_ist = [
+        now_ist + timedelta(seconds=random.uniform(0, remaining_window_seconds))
+        for _ in range(n_posts)
+    ]
     timestamps_ist.sort()
     
     log.info(f"📅 Daily session: {n_posts} posts scheduled across remaining active window")
@@ -2014,22 +1979,23 @@ def run_daily_session():
     execute_active_schedule()
 
 def get_cycle_start(dt_ist):
-    # If the time is before 10:00 AM, the cycle started yesterday at 2:00 PM
-    limit_time = dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
+    # Cycle runs from 3:00 PM IST through 11:00 AM IST the next day.
+    limit_time = dt_ist.replace(hour=11, minute=0, second=0, microsecond=0)
     if dt_ist < limit_time:
         yesterday = dt_ist - timedelta(days=1)
-        return yesterday.replace(hour=14, minute=0, second=0, microsecond=0)
+        return yesterday.replace(hour=15, minute=0, second=0, microsecond=0)
     else:
-        return dt_ist.replace(hour=14, minute=0, second=0, microsecond=0)
+        return dt_ist.replace(hour=15, minute=0, second=0, microsecond=0)
 
 def get_cycle_end(dt_ist):
-    # If the time is before 10:00 AM, the cycle ends today at 10:00 AM
-    limit_time = dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
+    # Cycle ends at 11:00 AM IST when the current time is before the cutoff,
+    # otherwise it ends tomorrow at 11:00 AM IST.
+    limit_time = dt_ist.replace(hour=11, minute=0, second=0, microsecond=0)
     if dt_ist < limit_time:
-        return dt_ist.replace(hour=10, minute=0, second=0, microsecond=0)
+        return dt_ist.replace(hour=11, minute=0, second=0, microsecond=0)
     else:
         tomorrow = dt_ist + timedelta(days=1)
-        return tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
+        return tomorrow.replace(hour=11, minute=0, second=0, microsecond=0)
 
 
 def execute_active_schedule():
@@ -3282,23 +3248,23 @@ def background_worker():
 
             if now_ist < cycle_start:
                 wait_seconds = (cycle_start - now_ist).total_seconds()
-                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Outside active window. Sleeping until start of next cycle at 3:00 PM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset previous stats if not already reset
                 if bot_state["posts_published"] > 0 or bot_state["posts_failed"] > 0 or bot_state["schedule"]:
                     reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until cycle start (11:30 AM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until cycle start (3:00 PM IST)")
                 
             elif now_ist >= cycle_end:
                 tomorrow_start = get_cycle_start(now_ist + timedelta(days=1))
                 wait_seconds = (tomorrow_start - now_ist).total_seconds()
-                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 11:30 AM IST (in {format_interval(int(wait_seconds))})...")
+                log.info(f"💤 Cycle ended for today. Resetting stats and sleeping until tomorrow's cycle at 3:00 PM IST (in {format_interval(int(wait_seconds))})...")
                 
                 # Reset cycle
                 reset_daily_cycle()
                 
-                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (11:30 AM IST)")
+                responsive_sleep(wait_seconds, "Sleeping until tomorrow's cycle (3:00 PM IST)")
                 
             else:
                 # We are inside the active window! Run/Resume daily session

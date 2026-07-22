@@ -1,12 +1,579 @@
 {
   "start_time": "2026-07-21 12:47:54 PM IST",
-  "posts_published": 2,
+  "posts_published": 1,
   "posts_failed": 0,
-  "n_posts_scheduled": 0,
-  "schedule": [],
+  "n_posts_scheduled": 81,
+  "schedule": [
+    {
+      "time": "03:22 PM IST",
+      "time_iso": "2026-07-22T15:22:39.389309",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "03:53 PM IST",
+      "time_iso": "2026-07-22T15:53:42.074882",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "04:28 PM IST",
+      "time_iso": "2026-07-22T16:28:10.007561",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "04:51 PM IST",
+      "time_iso": "2026-07-22T16:51:04.470695",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "04:52 PM IST",
+      "time_iso": "2026-07-22T16:52:35.128521",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "04:55 PM IST",
+      "time_iso": "2026-07-22T16:55:13.275884",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "05:12 PM IST",
+      "time_iso": "2026-07-22T17:12:23.577355",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "05:13 PM IST",
+      "time_iso": "2026-07-22T17:13:48.866644",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
+    },
+    {
+      "time": "06:12 PM IST",
+      "time_iso": "2026-07-22T18:12:32.439471",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "06:17 PM IST",
+      "time_iso": "2026-07-22T18:17:52.480634",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "06:46 PM IST",
+      "time_iso": "2026-07-22T18:46:27.973427",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:47 PM IST",
+      "time_iso": "2026-07-22T18:47:34.583357",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:52 PM IST",
+      "time_iso": "2026-07-22T18:52:35.936727",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "06:58 PM IST",
+      "time_iso": "2026-07-22T18:58:05.872228",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:05 PM IST",
+      "time_iso": "2026-07-22T19:05:47.006377",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:17 PM IST",
+      "time_iso": "2026-07-22T19:17:03.214788",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:21 PM IST",
+      "time_iso": "2026-07-22T19:21:47.252621",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:26 PM IST",
+      "time_iso": "2026-07-22T19:26:08.212752",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "07:39 PM IST",
+      "time_iso": "2026-07-22T19:39:04.747256",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "scenario_analysis"
+    },
+    {
+      "time": "08:11 PM IST",
+      "time_iso": "2026-07-22T20:11:15.032429",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "08:14 PM IST",
+      "time_iso": "2026-07-22T20:14:50.573520",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "08:49 PM IST",
+      "time_iso": "2026-07-22T20:49:11.810967",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "09:02 PM IST",
+      "time_iso": "2026-07-22T21:02:47.423042",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "09:04 PM IST",
+      "time_iso": "2026-07-22T21:04:06.548824",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "09:12 PM IST",
+      "time_iso": "2026-07-22T21:12:32.805057",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "09:23 PM IST",
+      "time_iso": "2026-07-22T21:23:21.274111",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "10:00 PM IST",
+      "time_iso": "2026-07-22T22:00:58.908990",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "11:28 PM IST",
+      "time_iso": "2026-07-22T23:28:24.621698",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "11:35 PM IST",
+      "time_iso": "2026-07-22T23:35:11.742836",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:02 AM IST",
+      "time_iso": "2026-07-23T00:02:10.812424",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:06 AM IST",
+      "time_iso": "2026-07-23T00:06:03.834899",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:09 AM IST",
+      "time_iso": "2026-07-23T00:09:25.456754",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:14 AM IST",
+      "time_iso": "2026-07-23T00:14:19.612400",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:20 AM IST",
+      "time_iso": "2026-07-23T00:20:38.093835",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "12:34 AM IST",
+      "time_iso": "2026-07-23T00:34:59.617707",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "12:41 AM IST",
+      "time_iso": "2026-07-23T00:41:33.931291",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:41 AM IST",
+      "time_iso": "2026-07-23T00:41:34.882201",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "12:53 AM IST",
+      "time_iso": "2026-07-23T00:53:36.642216",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "01:00 AM IST",
+      "time_iso": "2026-07-23T01:00:01.284249",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "01:21 AM IST",
+      "time_iso": "2026-07-23T01:21:09.919946",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "01:33 AM IST",
+      "time_iso": "2026-07-23T01:33:30.284114",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "01:43 AM IST",
+      "time_iso": "2026-07-23T01:43:16.214793",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "02:14 AM IST",
+      "time_iso": "2026-07-23T02:14:31.397368",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "03:23 AM IST",
+      "time_iso": "2026-07-23T03:23:33.680073",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "03:41 AM IST",
+      "time_iso": "2026-07-23T03:41:17.336305",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "03:45 AM IST",
+      "time_iso": "2026-07-23T03:45:32.995033",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "03:53 AM IST",
+      "time_iso": "2026-07-23T03:53:34.459579",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "04:11 AM IST",
+      "time_iso": "2026-07-23T04:11:17.813913",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "05:06 AM IST",
+      "time_iso": "2026-07-23T05:06:02.819386",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "05:14 AM IST",
+      "time_iso": "2026-07-23T05:14:23.764216",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "05:29 AM IST",
+      "time_iso": "2026-07-23T05:29:01.090726",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "05:29 AM IST",
+      "time_iso": "2026-07-23T05:29:02.954224",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "05:29 AM IST",
+      "time_iso": "2026-07-23T05:29:30.259922",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "05:42 AM IST",
+      "time_iso": "2026-07-23T05:42:57.713856",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:03 AM IST",
+      "time_iso": "2026-07-23T06:03:47.265932",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "06:09 AM IST",
+      "time_iso": "2026-07-23T06:09:41.022249",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:19 AM IST",
+      "time_iso": "2026-07-23T06:19:53.730388",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:28 AM IST",
+      "time_iso": "2026-07-23T06:28:32.589270",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:30 AM IST",
+      "time_iso": "2026-07-23T06:30:43.047894",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:37 AM IST",
+      "time_iso": "2026-07-23T06:37:18.954424",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:48 AM IST",
+      "time_iso": "2026-07-23T06:48:28.295266",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "06:48 AM IST",
+      "time_iso": "2026-07-23T06:48:31.287072",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "06:50 AM IST",
+      "time_iso": "2026-07-23T06:50:34.586015",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "07:03 AM IST",
+      "time_iso": "2026-07-23T07:03:03.226882",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:04 AM IST",
+      "time_iso": "2026-07-23T07:04:13.065928",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:09 AM IST",
+      "time_iso": "2026-07-23T07:09:38.467870",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:12 AM IST",
+      "time_iso": "2026-07-23T07:12:40.053630",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "thuchoang_style"
+    },
+    {
+      "time": "07:28 AM IST",
+      "time_iso": "2026-07-23T07:28:11.562641",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:31 AM IST",
+      "time_iso": "2026-07-23T07:31:14.851271",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "07:40 AM IST",
+      "time_iso": "2026-07-23T07:40:47.335904",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "08:13 AM IST",
+      "time_iso": "2026-07-23T08:13:52.242224",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "09:00 AM IST",
+      "time_iso": "2026-07-23T09:00:06.400839",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "09:08 AM IST",
+      "time_iso": "2026-07-23T09:08:39.990599",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "09:23 AM IST",
+      "time_iso": "2026-07-23T09:23:52.323693",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "09:32 AM IST",
+      "time_iso": "2026-07-23T09:32:11.412993",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "10:05 AM IST",
+      "time_iso": "2026-07-23T10:05:08.319344",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "10:21 AM IST",
+      "time_iso": "2026-07-23T10:21:59.767007",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "10:27 AM IST",
+      "time_iso": "2026-07-23T10:27:37.108282",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "10:32 AM IST",
+      "time_iso": "2026-07-23T10:32:32.846556",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "quick_narrative"
+    },
+    {
+      "time": "10:51 AM IST",
+      "time_iso": "2026-07-23T10:51:39.043899",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    },
+    {
+      "time": "10:54 AM IST",
+      "time_iso": "2026-07-23T10:54:01.550773",
+      "status": "Pending",
+      "coin": "Pending",
+      "type": "news_reaction"
+    }
+  ],
   "recent_posts": [],
   "recent_coins": [
-    "$JUP",
     "$ATOM",
     "$ESPORTS",
     "$WIF",
@@ -15,16 +582,17 @@
     "$TRX",
     "$ETHFI",
     "$MANA",
-    "$SEI"
+    "$SEI",
+    "$DOT"
   ],
   "recent_types": [
-    "scenario_analysis",
     "thuchoang_style",
     "news_reaction",
     "news_reaction",
     "quick_narrative",
-    "news_reaction"
+    "news_reaction",
+    "thuchoang_style"
   ],
   "error_message": null,
-  "status": "Sleeping until cycle start (11:30 AM IST) | IST: 01:39:10 PM (in 20m 49s)"
+  "status": "Waiting for post 1/81 at 03:22 PM IST | IST: 03:00:57 PM (in 21m 42s)"
 }
