@@ -6,25 +6,25 @@
   "schedule": [],
   "recent_posts": [],
   "recent_coins": [
-    "$APT",
-    "$WIF",
-    "$DOT",
-    "$ARB",
-    "$LINK",
-    "$TIA",
-    "$AVAX",
     "$JUP",
     "$ATOM",
-    "$ESPORTS"
+    "$ESPORTS",
+    "$WIF",
+    "$ONDO",
+    "$IMX",
+    "$TRX",
+    "$ETHFI",
+    "$MANA",
+    "$SEI"
   ],
   "recent_types": [
-    "quick_narrative",
-    "quick_narrative",
-    "thuchoang_style",
+    "scenario_analysis",
     "thuchoang_style",
     "news_reaction",
-    "thuchoang_style"
+    "news_reaction",
+    "quick_narrative",
+    "news_reaction"
   ],
   "error_message": null,
-  "status": "Sleeping until cycle start (11:30 AM IST) | IST: 01:39:32 PM (in 20m 27s)"
+  "status": "Sleeping until cycle start (11:30 AM IST) | IST: 01:39:10 PM (in 20m 49s)"
 }

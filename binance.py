@@ -563,14 +563,11 @@ FORMATTING RULES:
 
 # Weighted post type mix based on performance data:
 POST_MIX = {
-    "quick_narrative":   50,   # 118 avg views — best performer
-    "news_reaction":     25,   # 105 avg views when news < 45 min old
-    "thuchoang_style":   20,   # 82 avg views — consistent
-    "scenario_analysis":  5,   # 36 avg views — keep minimal
+    "quick_narrative":   45,   # best performer
+    "news_reaction":     35,   # increased — strongest engagement when news is fresh
+    "thuchoang_style":   18,   # consistent
+    "scenario_analysis":  2,   # near-removed — weakest by far
 }
-
-# Secondary coins rotation for thuchoang_style dual-widget posts
-SECONDARY_COINS = ["TRADOORUSDT", "AKEUSDT", "ESPORTSUSDT", "SKHYUSDT"]
 
 # Legacy POST_TYPES list kept for non-signal post_type lookups (will not be used for content generation)
 POST_TYPES = []
@@ -706,31 +703,66 @@ def generate_schedule_portfolio(n_posts: int, low_sentiment: bool = True) -> lis
 # COINS POOL — Maps cashtag → CoinGecko ID → Symbol
 # ─────────────────────────────────────────────
 COINS = [
-    {"tag": "$BTC",   "cg_id": "bitcoin",        "symbol": "BTC"},
-    {"tag": "$ETH",   "cg_id": "ethereum",        "symbol": "ETH"},
-    {"tag": "$BNB",   "cg_id": "binancecoin",     "symbol": "BNB"},
-    {"tag": "$SOL",   "cg_id": "solana",          "symbol": "SOL"},
-    {"tag": "$XRP",   "cg_id": "ripple",          "symbol": "XRP"},
-    {"tag": "$AVAX",  "cg_id": "avalanche-2",     "symbol": "AVAX"},
-    {"tag": "$LINK",  "cg_id": "chainlink",       "symbol": "LINK"},
-    {"tag": "$ARB",   "cg_id": "arbitrum",        "symbol": "ARB"},
-    {"tag": "$OP",    "cg_id": "optimism",        "symbol": "OP"},
-    # {"tag": "$MATIC", "cg_id": "matic-network",   "symbol": "MATIC"},
-    {"tag": "$DOGE",  "cg_id": "dogecoin",        "symbol": "DOGE"},
-    {"tag": "$DOT",   "cg_id": "polkadot",        "symbol": "DOT"},
-    {"tag": "$ADA",   "cg_id": "cardano",         "symbol": "ADA"},
-    {"tag": "$SUI",   "cg_id": "sui",             "symbol": "SUI"},
-    {"tag": "$APT",   "cg_id": "aptos",           "symbol": "APT"},
-    {"tag": "$INJ",   "cg_id": "injective-protocol", "symbol": "INJ"},
-    {"tag": "$TIA",   "cg_id": "celestia",        "symbol": "TIA"},
-    {"tag": "$JUP",   "cg_id": "jupiter-exchange-solana", "symbol": "JUP"},
-    {"tag": "$WIF",   "cg_id": "dogwifcoin",      "symbol": "WIF"},
-    {"tag": "$PEPE",  "cg_id": "pepe",            "symbol": "PEPE"},
-    {"tag": "$NEAR",  "cg_id": "near",            "symbol": "NEAR"},
-    #{"tag": "$FTM",   "cg_id": "fantom",          "symbol": "FTM"},
-    {"tag": "$ATOM",  "cg_id": "cosmos",          "symbol": "ATOM"},
+    # ── TIER 1: Top 10 market cap ──
+    {"tag": "$BTC",      "cg_id": "bitcoin",                       "symbol": "BTC"},
+    {"tag": "$ETH",      "cg_id": "ethereum",                      "symbol": "ETH"},
+    {"tag": "$BNB",      "cg_id": "binancecoin",                   "symbol": "BNB"},
+    {"tag": "$SOL",      "cg_id": "solana",                        "symbol": "SOL"},
+    {"tag": "$XRP",      "cg_id": "ripple",                        "symbol": "XRP"},
+    {"tag": "$DOGE",     "cg_id": "dogecoin",                      "symbol": "DOGE"},
+    {"tag": "$ADA",      "cg_id": "cardano",                       "symbol": "ADA"},
+    {"tag": "$AVAX",     "cg_id": "avalanche-2",                   "symbol": "AVAX"},
+    {"tag": "$TRX",      "cg_id": "tron",                          "symbol": "TRX"},
+    {"tag": "$HYPE",     "cg_id": "hyperliquid",                   "symbol": "HYPE"},
+ 
+    # ── TIER 2: Top 11–30 ──
+    {"tag": "$DOT",      "cg_id": "polkadot",                      "symbol": "DOT"},
+    {"tag": "$LINK",     "cg_id": "chainlink",                     "symbol": "LINK"},
+    {"tag": "$NEAR",     "cg_id": "near",                          "symbol": "NEAR"},
+    {"tag": "$SUI",      "cg_id": "sui",                           "symbol": "SUI"},
+    {"tag": "$APT",      "cg_id": "aptos",                         "symbol": "APT"},
+    {"tag": "$INJ",      "cg_id": "injective-protocol",            "symbol": "INJ"},
+    {"tag": "$OP",       "cg_id": "optimism",                      "symbol": "OP"},
+    {"tag": "$ARB",      "cg_id": "arbitrum",                      "symbol": "ARB"},
+    {"tag": "$ATOM",     "cg_id": "cosmos",                        "symbol": "ATOM"},
+    {"tag": "$FIL",      "cg_id": "filecoin",                      "symbol": "FIL"},
+    {"tag": "$LTC",      "cg_id": "litecoin",                      "symbol": "LTC"},
+    {"tag": "$UNI",      "cg_id": "uniswap",                       "symbol": "UNI"},
+    {"tag": "$AAVE",     "cg_id": "aave",                          "symbol": "AAVE"},
+    {"tag": "$IMX",      "cg_id": "immutable-x",                   "symbol": "IMX"},
+    {"tag": "$MATIC",    "cg_id": "matic-network",                 "symbol": "MATIC"},
+ 
+    # ── TIER 3: Active mid-caps ──
+    {"tag": "$TIA",      "cg_id": "celestia",                      "symbol": "TIA"},
+    {"tag": "$JUP",      "cg_id": "jupiter-exchange-solana",       "symbol": "JUP"},
+    {"tag": "$WIF",      "cg_id": "dogwifcoin",                    "symbol": "WIF"},
+    {"tag": "$PEPE",     "cg_id": "pepe",                          "symbol": "PEPE"},
+    {"tag": "$BONK",     "cg_id": "bonk",                          "symbol": "BONK"},
+    {"tag": "$FLOKI",    "cg_id": "floki",                         "symbol": "FLOKI"},
+    {"tag": "$SHIB",     "cg_id": "shiba-inu",                     "symbol": "SHIB"},
+    {"tag": "$SEI",      "cg_id": "sei-network",                   "symbol": "SEI"},
+    {"tag": "$STX",      "cg_id": "blockstack",                    "symbol": "STX"},
+    {"tag": "$RNDR",     "cg_id": "render-token",                  "symbol": "RNDR"},
+    {"tag": "$FET",      "cg_id": "fetch-ai",                      "symbol": "FET"},
+    {"tag": "$GRT",      "cg_id": "the-graph",                     "symbol": "GRT"},
+    {"tag": "$LDO",      "cg_id": "lido-dao",                      "symbol": "LDO"},
+    {"tag": "$CRV",      "cg_id": "curve-dao-token",               "symbol": "CRV"},
+    {"tag": "$MKR",      "cg_id": "maker",                         "symbol": "MKR"},
+    {"tag": "$SAND",     "cg_id": "the-sandbox",                   "symbol": "SAND"},
+    {"tag": "$MANA",     "cg_id": "decentraland",                  "symbol": "MANA"},
+    {"tag": "$AXS",      "cg_id": "axie-infinity",                 "symbol": "AXS"},
+    {"tag": "$ENS",      "cg_id": "ethereum-name-service",         "symbol": "ENS"},
+    {"tag": "$1INCH",    "cg_id": "1inch",                         "symbol": "1INCH"},
+    {"tag": "$COMP",     "cg_id": "compound-governance-token",     "symbol": "COMP"},
+    {"tag": "$SNX",      "cg_id": "havven",                        "symbol": "SNX"},
+    {"tag": "$ZRX",      "cg_id": "0x",                            "symbol": "ZRX"},
+    {"tag": "$BAL",      "cg_id": "balancer",                      "symbol": "BAL"},
+    {"tag": "$YFI",      "cg_id": "yearn-finance",                 "symbol": "YFI"},
 
 ]
+
+# Secondary coins rotation for thuchoang_style dual-widget posts
+SECONDARY_COINS = ["TRADOORUSDT", "AKEUSDT", "ESPORTSUSDT", "SKHYUSDT"]
 
 # Note: HASHTAG_POOL removed — top earners use ZERO hashtags.
 # Discovery is handled by the {future}(SYMBOLUSDT) widget appended to every post.
@@ -1519,8 +1551,10 @@ ZERO hashtags. Do NOT write {{future}} or {{spot}} — those are auto-appended."
 # ─────────────────────────────────────────────
 
 def generate_post(client: genai.Client, post_type_name: str, coin: dict,
-                  live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None) -> str:
+                  live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None, extra_prompt: str = None) -> str:
     prompt = build_user_prompt(post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline)
+    if extra_prompt:
+        prompt += "\n\n" + extra_prompt
 
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -1538,9 +1572,11 @@ def generate_post(client: genai.Client, post_type_name: str, coin: dict,
 
 
 def generate_post_with_gemma(client: genai.Client, post_type_name: str, coin: dict,
-                             live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None) -> str:
+                             live_data_block: str, recent_coins: list, recent_types: list, macro_headline: str = None, extra_prompt: str = None) -> str:
     """Fallback generator using gemma-4-26b-a4b-it if Gemini keys are exhausted."""
     prompt = build_user_prompt(post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline)
+    if extra_prompt:
+        prompt += "\n\n" + extra_prompt
     response = client.models.generate_content(
         model="gemma-4-26b-a4b-it",
         contents=prompt,
@@ -1912,51 +1948,46 @@ def run_daily_session():
     base_n = random.randint(POSTS_PER_DAY_MIN, POSTS_PER_DAY_MAX)
     n_posts = max(1, int(base_n * proportion))
     
-    # Generate schedule times within the remaining window
-    morning_start = cycle_end.replace(hour=6, minute=0, second=0, microsecond=0)
-    morning_end = cycle_end.replace(hour=9, minute=0, second=0, microsecond=0)
+    # Preferred IST hours — weighted toward high-engagement windows.
+    # 04-05: early Asia open | 08-10: peak morning | 19-20 & 22-23: evening/night
+    # 06-07 is intentionally absent — previously over-indexed, weakest engagement.
+    preferred_hours = [4, 5, 8, 9, 19, 20, 22, 23]  # IST hours
+
+    # Build 1-hour candidate windows that (a) fall within the remaining active
+    # window and (b) align with preferred hours. Fall back to the full remaining
+    # window if none of the preferred windows are still available.
+    today = now_ist.date()
+    candidate_windows = []
+    for h in preferred_hours:
+        win_start = datetime(today.year, today.month, today.day, h, 0, 0) + timedelta(hours=5, minutes=30) - timedelta(hours=5, minutes=30)
+        # Rebuild in IST (no tzinfo; get_ist_now() returns naive IST datetime)
+        win_start = now_ist.replace(hour=h, minute=0, second=0, microsecond=0)
+        win_end   = win_start + timedelta(hours=1)
+        # Clamp to the remaining active window
+        eff_start = max(win_start, now_ist)
+        eff_end   = min(win_end,   cycle_end)
+        if eff_end > eff_start:  # window has remaining time
+            candidate_windows.append((eff_start, eff_end))
+
+    # If no preferred windows remain, fall back to uniform distribution
+    if not candidate_windows:
+        candidate_windows = [(now_ist, cycle_end)]
+
+    # Total available seconds across all candidate windows (for weighted sampling)
+    total_candidate_seconds = sum((e - s).total_seconds() for s, e in candidate_windows)
 
     timestamps_ist = []
-    
-    if now_ist < morning_end:
-        n_morning = int(n_posts * 0.30)
-        n_other = n_posts - n_morning
-        
-        actual_morning_start = max(now_ist, morning_start)
-        morning_duration = (morning_end - actual_morning_start).total_seconds()
-        
-        for _ in range(n_morning):
-            if morning_duration > 0:
-                timestamps_ist.append(actual_morning_start + timedelta(seconds=random.randint(0, int(morning_duration))))
-            else:
-                timestamps_ist.append(now_ist)
-                
-        # Distribute remaining 70% outside the morning window
-        valid_ranges = []
-        if now_ist < morning_start:
-            valid_ranges.append((now_ist, morning_start))
-        if morning_end < cycle_end:
-            valid_ranges.append((max(now_ist, morning_end), cycle_end))
-            
-        for _ in range(n_other):
-            if valid_ranges:
-                total_dur = sum((r[1] - r[0]).total_seconds() for r in valid_ranges)
-                if total_dur > 0:
-                    r = random.uniform(0, total_dur)
-                    for start_dt, end_dt in valid_ranges:
-                        dur = (end_dt - start_dt).total_seconds()
-                        if r <= dur:
-                            timestamps_ist.append(start_dt + timedelta(seconds=random.randint(0, int(dur))))
-                            break
-                        r -= dur
-                else:
-                    timestamps_ist.append(now_ist)
-            else:
-                timestamps_ist.append(now_ist)
-    else:
-        # Past the morning window, distribute uniformly
-        for _ in range(n_posts):
-            timestamps_ist.append(now_ist + timedelta(seconds=random.randint(0, int(remaining_seconds))))
+    for _ in range(n_posts):
+        r = random.uniform(0, total_candidate_seconds)
+        for win_start, win_end in candidate_windows:
+            dur = (win_end - win_start).total_seconds()
+            if r <= dur:
+                timestamps_ist.append(win_start + timedelta(seconds=random.uniform(0, dur)))
+                break
+            r -= dur
+        else:
+            # Safety fallback — should never be reached
+            timestamps_ist.append(now_ist + timedelta(seconds=random.uniform(0, (cycle_end - now_ist).total_seconds())))
             
     timestamps_ist.sort()
     
@@ -2104,11 +2135,15 @@ def execute_active_schedule():
         content = None
         failed_keys_count = 0
         max_attempts = len(GEMINI_API_KEYS)
-        while failed_keys_count < max_attempts:
+        generation_attempts = 0
+        extra_prompt = None
+        
+        while failed_keys_count < max_attempts and generation_attempts < 3:
+            generation_attempts += 1
             try:
                 current_client = rotator.get_client()
-                log.info(f"🤖 Generating [{post_type_name}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts})...")
-                content = generate_post(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline)
+                log.info(f"🤖 Generating [{post_type_name}] post about {coin['tag']} (Key {rotator.current_index + 1}/{len(GEMINI_API_KEYS)}, attempt {failed_keys_count + 1}/{max_attempts}, generation {generation_attempts}/3)...")
+                content = generate_post(current_client, post_type_name, coin, live_data_block, recent_coins, recent_types, macro_headline=macro_headline, extra_prompt=extra_prompt)
 
                 word_count = len(content.split())
                 if word_count < 8:
@@ -2118,10 +2153,24 @@ def execute_active_schedule():
                     save_bot_state()
                     content = None
                     break
-                if word_count > 180:
-                    log.warning(f"   Post too long ({word_count} words), truncating.")
-                    content = " ".join(content.split()[:160]) + "..."
-                
+                # if word_count > 180:
+                #     log.warning(f"   Post too long ({word_count} words), truncating.")
+                #     content = " ".join(content.split()[:160]) + "..."
+
+                # Hard character limit — retry if too long
+                if len(content) > 380:
+                    if generation_attempts < 3:
+                        log.warning(f"   Too long ({len(content)} chars) — regenerating shorter...")
+                        extra_prompt = "CRITICAL REQUIREMENT: Your previous response was too long. You MUST ensure the response is strictly UNDER 380 CHARACTERS total. Be highly concise and cut out filler words."
+                        continue
+                    else:
+                        log.warning(f"   Too long ({len(content)} chars) after 3 attempts — skipping.")
+                        with state_lock:
+                            bot_state["schedule"][next_item_idx]["status"] = "Skipped (Too Long)"
+                        save_bot_state()
+                        content = None
+                        break
+
                 fail_streak = 0
                 break
 
